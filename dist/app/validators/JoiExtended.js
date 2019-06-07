@@ -1,0 +1,91 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const joi = require("joi");
+/**
+ * Rule to validate native bigint type.
+ */
+const bigintRule = {
+    name: 'bigint',
+    setup(params) {
+        this['_flags'].bigint = true; // Set a flag for later use
+    },
+    validate(params, value, state, options) {
+        const isString = (val) => (typeof val === 'string');
+        const isNumString = (val) => val.match(/^\d+$/);
+        return (isString(value) && isNumString(value))
+            // Everything is OK
+            ? value
+            // Generate an error, state and options need to be passed
+            : this.createError('genn.bigint', { v: value }, state, options);
+    },
+};
+function toDate(dateString) {
+    return new Date(dateString);
+}
+/**
+ * Rule to validate W3C Date and Time format for web.
+ */
+const dateStringRule = {
+    name: 'dateString',
+    params: {
+        options: joi.object({
+            isUTC: joi.boolean().default(false),
+            translator: joi.any(),
+        }).optional(),
+    },
+    setup(params) {
+        this['_flags'].dateString = true;
+        params.options = params.options || { isUTC: false };
+    },
+    validate(params, value, state, validationOpts) {
+        // Eg: 2019-05-15T02:06:02Z or 2019-05-15
+        const UTC_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}Z)?$/;
+        // Eg: 2019-05-15T09:06:02+07:00 or 2019-05-15
+        const TIMEZONE_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}[\+\-]\d{2}:\d{2})?$/;
+        const ruleOpts = params.options;
+        const regex = ruleOpts.isUTC ? UTC_DATE : TIMEZONE_DATE;
+        const isMatch = typeof value === 'string'
+            ? (value.match(regex) != null)
+            : false;
+        if (!isMatch) {
+            return this.createError('genn.dateStringWrongFormat', {
+                value,
+                format: ruleOpts.isUTC ? 'YYYY-MM-DDThh:mm:ssZ' : 'YYYY-MM-DDThh:mm+hh:mm or -hh:mm',
+            }, state, validationOpts);
+        }
+        else if (new Date(value).toString() === 'Invalid Date') {
+            return this.createError('genn.dateStringInvalidValue', {
+                value,
+            }, state, validationOpts);
+        }
+        // Everything is OK
+        if (validationOpts.convert) {
+            const translator = ruleOpts.translator || toDate;
+            return translator(value);
+        }
+        return value;
+    },
+};
+// Working flow:
+// rule.setup => extension.pre => rule.validate => extension.coerce
+const joiExtensions = {
+    name: 'genn',
+    language: {
+        /**
+         * Validate against native bigint type
+         */
+        bigint: 'needs to be a bigint',
+        /**
+         * Validate against W3C Date and Time Formats.
+         * See: https://www.w3.org/TR/NOTE-datetime
+         */
+        dateStringWrongFormat: 'needs to be a date string compliant with W3C Date and Time Formats ({{format}})',
+        dateStringInvalidValue: 'needs all components to have valid values',
+    },
+    rules: [bigintRule, dateStringRule],
+};
+/**
+ * Joi instance with "genn()" extension enabled, including some custom rules.
+ */
+exports.extJoi = joi.extend(joiExtensions);
+//# sourceMappingURL=JoiExtended.js.map
