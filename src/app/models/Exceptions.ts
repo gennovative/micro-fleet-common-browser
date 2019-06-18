@@ -4,6 +4,7 @@ export class Exception implements Error {
 
     public stack: string
     public name: string
+    public details: any
 
 
     /**

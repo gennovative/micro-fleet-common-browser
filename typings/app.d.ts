@@ -5,6 +5,7 @@ declare module '@micro-fleet/common-browser/dist/app/models/Exceptions' {
 	    readonly isCritical: boolean;
 	    stack: string;
 	    name: string;
+	    details: any;
 	    /**
 	     *
 	     * @param message
@@ -236,28 +237,59 @@ declare module '@micro-fleet/common-browser/dist/app/interfaces/automapper' {
 
 }
 declare module '@micro-fleet/common-browser/dist/app/models/Maybe' {
+	import { Exception } from '@micro-fleet/common-browser/dist/app/models/Exceptions';
+	/**
+	 * Represents an error when attempting to get value from a Maybe.Nothing
+	 */
+	export class EmptyMaybeException extends Exception {
+	    constructor();
+	}
 	/**
 	 * Represents an object which may or may not have a value.
 	 * Use this class to avoid assigning `null` to a variable.
-	 * Inspired by V8 Maybe: https://v8docs.nodesource.com/node-9.3/d9/d4b/classv8_1_1_maybe.html
+	 * Source code inspired by: https://github.com/ramda/ramda-fantasy/blob/master/dist/Maybe.js
+	 * and V8 Maybe: https://v8docs.nodesource.com/node-9.3/d9/d4b/classv8_1_1_maybe.html
 	 */
-	export class Maybe<T> {
-	    	    	    /**
-	     * Gets whether this object has value or not.
-	     */
-	    readonly hasValue: boolean;
+	export abstract class Maybe<T = any> {
+	    static Nothing(): Maybe;
+	    static Just<T>(value: T): Maybe<T>;
+	    static isJust: (maybe: Maybe<any>) => boolean;
+	    static isNothing: (maybe: Maybe<any>) => boolean;
+	    static of: typeof Maybe.Just;
+	    abstract readonly isJust: boolean;
+	    abstract readonly isNothing: boolean;
 	    /**
-	     * Attempts to get the contained value, and throws exception if there is no value.
-	     * Use function `TryGetValue` to avoid exception.
-	     * @throws {MinorException} If there is no value.
+	     * Gets the contained value if Just, or throws an `EmptyMaybeException` if Nothing.
+	     * If you want to avoid exception, use `tryGetValue()` instead.
 	     */
-	    readonly value: T;
-	    constructor(value?: T);
+	    abstract readonly value: T;
+	    constructor();
+	    of: typeof Maybe.Just;
+	    /**
+	     * Applies the funtion `f` to internal value if Just,
+	     * or does nothing if Nothing.
+	     */
+	    abstract map<TMap>(f: (val: T) => TMap): Maybe<TMap>;
+	    /**
+	     * Execute the callback function if Nothing,
+	     * or does nothing if Just.
+	     */
+	    abstract orElse(f: () => void): Maybe<T>;
+	    /**
+	     * Takes another Maybe that wraps a function and applies its `map`
+	     * method to this Maybe's value, which must be a function.
+	     */
+	    abstract ap(m: Maybe): Maybe;
+	    /**
+	     * `f` must be a function which returns a value of the same Chain
+	     *  chain must return a value of the same Chain
+	     */
+	    abstract chain<TChain>(f: (val: T) => Maybe<TChain>): Maybe<TChain>;
 	    /**
 	     * Attempts to get the contained value, if there is not, returns the given default value.
 	     * @param defaultVal Value to return in case there is no contained value.
 	     */
-	    TryGetValue(defaultVal: T): T;
+	    abstract tryGetValue(defaultVal: any): T;
 	}
 
 }
@@ -279,46 +311,6 @@ declare module '@micro-fleet/common-browser/dist/app/models/PagedArray' {
 	        data: any[];
 	    };
 	}
-
-}
-declare module '@micro-fleet/common-browser/dist/app/validators/JoiExtended' {
-	import * as joi from 'joi';
-	export type JoiDateStringOptions = {
-	    /**
-	     * Whether the input string is in UTC format.
-	     * Default: false.
-	     */
-	    isUTC?: boolean;
-	    /**
-	     * Function to convert input string to desired data type.
-	     * Default function returns native Date object.
-	     */
-	    translator?: any;
-	};
-	export type ExtendedJoi = joi.AnySchema & {
-	    genn: () => {
-	        /**
-	         * Makes sure input is native bigint type.
-	         *
-	         * @example extJoi.genn().bigint().validate('98765443123456');
-	         * @example extJoi.genn().bigint().validate(98765443123456n, {convert: false});
-	         */
-	        bigint: () => joi.AnySchema;
-	        /**
-	         * Makes sure input is in W3C Date and Time Formats,
-	         * but must have at least year, month, and day.
-	         *
-	         * @example extJoi.genn().dateString().validate('2019-05-15T09:06:02+07:00');
-	         * @example extJoi.genn().dateString({ isUTC: true }).validate('2019-05-15T09:06:02Z');
-	         * @example extJoi.genn().dateString({ translator: moment }).validate('2019-05-15T09:06:02-07:00');
-	         */
-	        dateString: (options?: JoiDateStringOptions) => joi.AnySchema;
-	    };
-	};
-	/**
-	 * Joi instance with "genn()" extension enabled, including some custom rules.
-	 */
-	export const extJoi: ExtendedJoi;
 
 }
 declare module '@micro-fleet/common-browser/dist/app/validators/ValidationError' {
@@ -402,6 +394,122 @@ declare module '@micro-fleet/common-browser/dist/app/validators/IModelValidator'
 	}
 
 }
+declare module '@micro-fleet/common-browser/dist/app/translators/IModelAutoMapper' {
+	import { ICreateMapFluentFunctions } from '@micro-fleet/common-browser/dist/app/interfaces/automapper';
+	import { IModelValidator } from '@micro-fleet/common-browser/dist/app/validators/IModelValidator';
+	import { ValidationError } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
+	export interface MappingOptions {
+	    /**
+	     * Temporarily turns on or off model validation.
+	     * Can only be turned on if validator is provided to constructor.
+	     */
+	    enableValidation?: boolean;
+	    /**
+	     * If specified, gives validation error to this callback. Otherwise, throw error.
+	     */
+	    errorCallback?: (err: ValidationError) => void;
+	}
+	export interface IModelAutoMapper<T extends Object> {
+	    /**
+	     * Turns on or off model validation before translating.
+	     * Is set to `true` if validator is passed to class constructor.
+	     */
+	    enableValidation: boolean;
+	    /**
+	     * Gets the internal AutoMapper instance for advanced configuration.
+	     */
+	    readonly internalMapper: ICreateMapFluentFunctions;
+	    /**
+	     * Gets the validator.
+	     */
+	    readonly validator: IModelValidator<T>;
+	    /**
+	     * Copies properties from `sources` to dest then optionally validates
+	     * the result (depends on `enableValidation`).
+	     * If `enableValidation` is turned off, it works just like native `Object.assign()` function,
+	     * therefore, use `Object.assign()` for better performance if validation is not needed.
+	     * Note that it uses `partial()` internally, hence `required` validation is IGNORED.
+	     *
+	     * @throws {ValidationError}
+	     */
+	    merge(dest: Partial<T>, sources: Partial<T> | Partial<T>[], options?: MappingOptions): Partial<T>;
+	    /**
+	     * Validates then converts an object to type <T>.
+	     * but ONLY properties with value are validated and copied.
+	     * Note that `required` validation is IGNORED.
+	     * @param {object} source The object to be translated.
+	     *
+	     * @throws {ValidationError} If no `errorCallback` is provided.
+	     */
+	    partial(source: object, options?: MappingOptions): Partial<T>;
+	    /**
+	     * Validates then converts a list of objects to type <T>.
+	     * but ONLY properties with value are validated and copied.
+	     * Note that `required` validation is IGNORED.
+	     * @param {object[]} sources A list of objects to be translated.
+	     *
+	     * @throws {ValidationError} If no `errorCallback` is provided.
+	     */
+	    partialMany(sources: object[], options?: MappingOptions): Partial<T>[];
+	    /**
+	     * Validates then converts an object to type <T>.
+	     * ALL properties are validated and copied regardless with or without value.
+	     * @param {object} source The object to be translated.
+	     *
+	     * @throws {ValidationError} If no `errorCallback` is provided.
+	     */
+	    whole(source: object, options?: MappingOptions): T;
+	    /**
+	     * Validates then converts a list of objects to type <T>.
+	     * ALL properties are validated and copied regardless with or without value.
+	     * @param {object[]} sources The list of objects to be translated.
+	     *
+	     * @throws {ValidationError} If no `errorCallback` is provided.
+	     */
+	    wholeMany(sources: object[], options?: MappingOptions): T[];
+	}
+
+}
+declare module '@micro-fleet/common-browser/dist/app/validators/JoiExtended' {
+	import * as joi from 'joi';
+	export type JoiDateStringOptions = {
+	    /**
+	     * Whether the input string is in UTC format.
+	     * Default: false.
+	     */
+	    isUTC?: boolean;
+	    /**
+	     * Function to convert input string to desired data type.
+	     * Default function returns native Date object.
+	     */
+	    translator?: any;
+	};
+	export type ExtendedJoi = joi.AnySchema & {
+	    genn: () => {
+	        /**
+	         * Makes sure input is native bigint type.
+	         *
+	         * @example extJoi.genn().bigint().validate('98765443123456');
+	         * @example extJoi.genn().bigint().validate(98765443123456n, {convert: false});
+	         */
+	        bigint: () => joi.AnySchema;
+	        /**
+	         * Makes sure input is in W3C Date and Time Formats,
+	         * but must have at least year, month, and day.
+	         *
+	         * @example extJoi.genn().dateString().validate('2019-05-15T09:06:02+07:00');
+	         * @example extJoi.genn().dateString({ isUTC: true }).validate('2019-05-15T09:06:02Z');
+	         * @example extJoi.genn().dateString({ translator: moment }).validate('2019-05-15T09:06:02-07:00');
+	         */
+	        dateString: (options?: JoiDateStringOptions) => joi.AnySchema;
+	    };
+	};
+	/**
+	 * Joi instance with "genn()" extension enabled, including some custom rules.
+	 */
+	export const extJoi: ExtendedJoi;
+
+}
 declare module '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator' {
 	import * as joi from 'joi';
 	import { IModelValidator, JoiModelValidatorCreateOptions, ValidationOptions } from '@micro-fleet/common-browser/dist/app/validators/IModelValidator';
@@ -459,79 +567,16 @@ declare module '@micro-fleet/common-browser/dist/app/validators/JoiModelValidato
 	}
 
 }
-declare module '@micro-fleet/common-browser/dist/app/translators/IModelAutoMapper' {
-	import { ICreateMapFluentFunctions } from '@micro-fleet/common-browser/dist/app/interfaces/automapper';
-	import { JoiModelValidator } from '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator';
-	import { ValidationError } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
-	export interface MappingOptions {
-	    /**
-	     * Temporarily turns on or off model validation.
-	     * Can only be turned on if validator is provided to constructor.
-	     */
-	    enableValidation?: boolean;
-	    /**
-	     * If specified, gives validation error to this callback. Otherwise, throw error.
-	     */
-	    errorCallback?: (err: ValidationError) => void;
-	}
-	export interface IModelAutoMapper<T extends Object> {
-	    /**
-	     * Turns on or off model validation before translating.
-	     * Is set to `true` if validator is passed to class constructor.
-	     */
-	    enableValidation: boolean;
-	    /**
-	     * Gets the internal AutoMapper instance for advanced configuration.
-	     */
-	    readonly internalMapper: ICreateMapFluentFunctions;
-	    /**
-	     * Gets the validator.
-	     */
-	    readonly validator: JoiModelValidator<T>;
-	    /**
-	     * Copies properties from `sources` to dest then optionally validates
-	     * the result (depends on `enableValidation`).
-	     * If `enableValidation` is turned off, it works just like native `Object.assign()` function,
-	     * therefore, use `Object.assign()` for better performance if validation is not needed.
-	     * Note that it uses `partial()` internally, hence `required` validation is IGNORED.
-	     *
-	     * @throws {ValidationError}
-	     */
-	    merge(dest: Partial<T>, sources: Partial<T> | Partial<T>[], options?: MappingOptions): Partial<T>;
-	    /**
-	     * Validates then converts an object to type <T>.
-	     * but ONLY properties with value are validated and copied.
-	     * Note that `required` validation is IGNORED.
-	     * @param {object} source The object to be translated.
-	     *
-	     * @throws {ValidationError} If no `errorCallback` is provided.
-	     */
-	    partial(source: object, options?: MappingOptions): Partial<T>;
-	    /**
-	     * Validates then converts a list of objects to type <T>.
-	     * but ONLY properties with value are validated and copied.
-	     * Note that `required` validation is IGNORED.
-	     * @param {object[]} sources A list of objects to be translated.
-	     *
-	     * @throws {ValidationError} If no `errorCallback` is provided.
-	     */
-	    partialMany(sources: object[], options?: MappingOptions): Partial<T>[];
-	    /**
-	     * Validates then converts an object to type <T>.
-	     * ALL properties are validated and copied regardless with or without value.
-	     * @param {object} source The object to be translated.
-	     *
-	     * @throws {ValidationError} If no `errorCallback` is provided.
-	     */
-	    whole(source: object, options?: MappingOptions): T;
-	    /**
-	     * Validates then converts a list of objects to type <T>.
-	     * ALL properties are validated and copied regardless with or without value.
-	     * @param {object[]} sources The list of objects to be translated.
-	     *
-	     * @throws {ValidationError} If no `errorCallback` is provided.
-	     */
-	    wholeMany(sources: object[], options?: MappingOptions): T[];
-	}
+declare module '@micro-fleet/common-browser' {
+	export * from '@micro-fleet/common-browser/dist/app/Guard';
+	export * from '@micro-fleet/common-browser/dist/app/interfaces/automapper';
+	export * from '@micro-fleet/common-browser/dist/app/models/Exceptions';
+	export * from '@micro-fleet/common-browser/dist/app/models/Maybe';
+	export * from '@micro-fleet/common-browser/dist/app/models/PagedArray';
+	export * from '@micro-fleet/common-browser/dist/app/translators/IModelAutoMapper';
+	export * from '@micro-fleet/common-browser/dist/app/validators/IModelValidator';
+	export * from '@micro-fleet/common-browser/dist/app/validators/JoiExtended';
+	export * from '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator';
+	export * from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
 
 }

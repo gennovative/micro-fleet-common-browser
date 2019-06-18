@@ -1,5 +1,5 @@
 import { ICreateMapFluentFunctions } from '../interfaces/automapper'
-import { JoiModelValidator } from '../validators/JoiModelValidator'
+import { IModelValidator } from '../validators/IModelValidator'
 import { ValidationError } from '../validators/ValidationError'
 
 
@@ -33,7 +33,7 @@ export interface IModelAutoMapper<T extends Object> {
     /**
      * Gets the validator.
      */
-    readonly validator: JoiModelValidator<T>
+    readonly validator: IModelValidator<T>
 
     /**
      * Copies properties from `sources` to dest then optionally validates
