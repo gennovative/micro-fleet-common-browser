@@ -53,8 +53,8 @@ export class JoiModelValidator<T>
         requirePk: boolean,
         protected _schemaMapPk?: joi.SchemaMap,
     ) {
-        // As default, model ID is a 64-bit integer.
-        let idSchema = extJoi.genn().bigint()
+        // As default, model ID is a string for 64-bit integer.
+        let idSchema = extJoi.genn().bigint().options({convert: false})
         if (requirePk) {
             idSchema = idSchema.required()
         }

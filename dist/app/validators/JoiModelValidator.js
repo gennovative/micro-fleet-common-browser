@@ -17,8 +17,8 @@ class JoiModelValidator {
         this._schemaMap = _schemaMap;
         this._isCompositePk = _isCompositePk;
         this._schemaMapPk = _schemaMapPk;
-        // As default, model ID is a 64-bit integer.
-        let idSchema = JoiExtended_1.extJoi.genn().bigint();
+        // As default, model ID is a string for 64-bit integer.
+        let idSchema = JoiExtended_1.extJoi.genn().bigint().options({ convert: false });
         if (requirePk) {
             idSchema = idSchema.required();
         }
