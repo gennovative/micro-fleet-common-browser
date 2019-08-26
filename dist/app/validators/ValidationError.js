@@ -17,7 +17,7 @@ class ValidationError extends Exceptions_1.MinorException {
         if (joiDetails && joiDetails.length) {
             details = joiDetails.map(d => ({
                 message: d.message,
-                path: d.path,
+                path: d.path || [],
                 value: (d.context ? d.context.value : d['value']),
             }));
         }

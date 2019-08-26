@@ -1,9 +1,8 @@
 import { expect } from 'chai'
 import * as joi from 'joi'
 
-import { JoiModelValidator } from '../../app/validators/JoiModelValidator'
+import { JoiModelValidator, extJoi } from '../../app'
 import { SampleModel } from './SampleModel'
-import { extJoi } from '../../app/validators/JoiExtended'
 
 
 let globalValidator: JoiModelValidator<SampleModel>
@@ -17,9 +16,9 @@ describe('JoiModelValidator', () => {
                 age: joi.number().min(15).max(99).integer().optional(),
                 gender: joi.only('male', 'female').optional(),
             },
-            isCompositePk: false,
-            requirePk: false,
-            schemaMapPk: {
+            isCompositeId: false,
+            requireId: false,
+            schemaMapId: {
                 theID: joi.number().min(1).max(Number.MAX_SAFE_INTEGER),
             },
         })
@@ -31,11 +30,11 @@ describe('JoiModelValidator', () => {
         })
 
         it('schemaMapId', () => {
-            expect(globalValidator.schemaMapPk).to.equal(globalValidator['_schemaMapPk'])
+            expect(globalValidator.schemaMapId).to.equal(globalValidator['_schemaMapId'])
         })
 
         it('isCompoundPk', () => {
-            expect(globalValidator.isCompositePk).to.equal(globalValidator['_isCompositePk'])
+            expect(globalValidator.isCompositeId).to.equal(globalValidator['_isCompositeId'])
         })
     }) // END describe 'getters'
 
@@ -45,7 +44,7 @@ describe('JoiModelValidator', () => {
             const theID = 999
 
             // Act
-            const [error, pk] = globalValidator.pk(theID)
+            const [error, pk] = globalValidator.id(theID)
 
             // Assert
             if (error) { console.error(error) }
@@ -58,20 +57,20 @@ describe('JoiModelValidator', () => {
             // Arrange
             const validator = JoiModelValidator.create<SampleModel>({
                     schemaMapModel: { name: joi.string() },
-                    isCompositePk: true,
-                    requirePk: true,
-                    schemaMapPk: {
+                    isCompositeId: true,
+                    requireId: true,
+                    schemaMapId: {
                         id: extJoi.genn().bigint().required(),
                         tenantId: extJoi.genn().bigint().required(),
                     },
                 }),
                 target = {
-                    id: '9007199254740991',
-                    tenantId: '9007199254740991',
+                    id: BigInt(9007199254740991) + BigInt(999), // Number.MAX_SAFE_INTEGER + 999n
+                    tenantId: BigInt(9007199254740991) + BigInt(888),
                 }
 
             // Act
-            const [error, pk] = validator.pk(target)
+            const [error, pk] = validator.id(target)
 
             // Assert
             if (error) { console.error(error) }
@@ -86,7 +85,7 @@ describe('JoiModelValidator', () => {
             const theID = 0
 
             // Act
-            const [error, pk] = globalValidator.pk(theID)
+            const [error, pk] = globalValidator.id(theID)
 
             // Assert
             expect(pk).not.to.exist
@@ -169,8 +168,8 @@ describe('JoiModelValidator', () => {
                         age: joi.number().min(15).max(99).integer().optional(),
                         gender: joi.only('male', 'female').optional(),
                     },
-                    isCompositePk: null,
-                    requirePk: true,
+                    isCompositeId: null,
+                    requireId: true,
                 }),
                 target = {
                     name: 'Gennova123',
@@ -194,8 +193,8 @@ describe('JoiModelValidator', () => {
             // Arrange
             const validator = JoiModelValidator.create<SampleModel>({
                 schemaMapModel: { name: joi.string() },
-                isCompositePk: true,
-                requirePk: true,
+                isCompositeId: true,
+                requireId: true,
             }),
             target = {
                 name: 'Gennova123',

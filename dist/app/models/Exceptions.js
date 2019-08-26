@@ -66,4 +66,14 @@ class NotImplementedException extends Exception {
     }
 }
 exports.NotImplementedException = NotImplementedException;
+/**
+ * Represents an error whose origin is from another system.
+ */
+class InternalErrorException extends Exception {
+    constructor(message) {
+        super(message || 'An error occured on the 3rd-party side', false, InternalErrorException);
+        this.name = 'InternalErrorException';
+    }
+}
+exports.InternalErrorException = InternalErrorException;
 //# sourceMappingURL=Exceptions.js.map

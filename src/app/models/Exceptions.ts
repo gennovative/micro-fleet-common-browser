@@ -77,3 +77,14 @@ export class NotImplementedException extends Exception {
         this.name = 'NotImplementedException'
     }
 }
+
+/**
+ * Represents an error whose origin is from another system.
+ */
+export class InternalErrorException extends Exception {
+
+    constructor(message?: string) {
+        super(message || 'An error occured on the 3rd-party side', false, InternalErrorException)
+        this.name = 'InternalErrorException'
+    }
+}

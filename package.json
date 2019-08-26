@@ -1,6 +1,6 @@
 {
     "name": "@micro-fleet/common-browser",
-    "version": "1.4.0-rc1",
+    "version": "1.4.1",
     "description": "Contains helpers, models and constants for Frontend.",
     "scripts": {
         "build": "npm run compile && npm run test",
@@ -11,8 +11,7 @@
         "release": "npm run build && npm run definition",
         "test": "nyc --reporter=json --reporter=html --include dist/app/**/*.js mocha --recursive dist/test",
         "lint": "tslint --fix 'src/**/*.ts'",
-        "watch": "npm run clean && npm run lint && tsc --watch --pretty",
-        "linkPackages": "node ../../../scripts/linkPackages.js"
+        "watch": "npm run clean && npm run lint && tsc --watch --pretty"
     },
     "dependencies": {
         "joi": "~13.0"

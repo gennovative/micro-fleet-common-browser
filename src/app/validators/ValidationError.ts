@@ -16,12 +16,12 @@ export type ValidationErrorItem = {
     /**
      * Path to the target property in validation schema.
      */
-    path: string[];
+    path?: string[];
 
     /**
      * The invalid property value.
      */
-    value: any;
+    value?: any;
 }
 
 /**
@@ -35,7 +35,7 @@ export class ValidationError extends MinorException {
         if (joiDetails && joiDetails.length) {
             details = joiDetails.map(d => ({
                 message: d.message,
-                path: d.path,
+                path: d.path || [],
                 value: (d.context ? d.context.value : d['value']),
             }))
         }

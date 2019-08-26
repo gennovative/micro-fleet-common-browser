@@ -1,0 +1,1 @@
+// For global typings

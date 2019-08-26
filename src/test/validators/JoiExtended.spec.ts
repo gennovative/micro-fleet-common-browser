@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import * as moment from 'moment'
 
-import { extJoi } from '../../app/validators/JoiExtended'
+import { extJoi } from '../../app'
 
 
 describe('JoiExtended', () => {
@@ -21,15 +21,15 @@ describe('JoiExtended', () => {
                 console.error(errorOne)
             }
             expect(errorOne).not.to.exist
-            expect(typeof valueOne).to.equal('string')
-            expect(valueOne).to.equal(targetOne)
+            expect(typeof valueOne).to.equal('bigint')
+            expect(valueOne).to.equal(BigInt(targetOne))
 
             if (errorTwo) {
                 console.error(errorTwo)
             }
             expect(errorTwo).not.to.exist
-            expect(typeof valueTwo).to.equal('string')
-            expect(valueTwo).to.equal(targetTwo)
+            expect(typeof valueTwo).to.equal('bigint')
+            expect(valueTwo).to.equal(BigInt(targetTwo))
         })
 
         it('Should return an error object if input cannot be converted to bigint', () => {
@@ -52,19 +52,37 @@ describe('JoiExtended', () => {
 
         it('Should return the value without convert if valid', () => {
             // Arrange
-            const target = '98765432135798642099887766554433221100'
+            const targetOne = BigInt(12345),
+                targetTwo = BigInt(Number.MAX_SAFE_INTEGER) + BigInt(999),
+                targetThree = '98765432135798642099887766554433221100'
 
             // Act
             const schema = extJoi.genn().bigint()
-            const { error: errorThree, value: valueThree } = schema.validate(target, { convert: false })
+            const { error: errorOne, value: valueOne } = schema.validate(targetOne, { convert: false })
+            const { error: errorTwo, value: valueTwo } = schema.validate(targetTwo, { convert: false })
+            const { error: errorThree, value: valueThree } = schema.validate(targetThree, { convert: false })
 
             // Assert
+            if (errorOne) {
+                console.error(errorOne)
+            }
+            expect(errorOne).not.to.exist
+            expect(typeof valueOne).to.equal('bigint')
+            expect(valueOne).to.equal(targetOne)
+
+            if (errorTwo) {
+                console.error(errorTwo)
+            }
+            expect(errorTwo).not.to.exist
+            expect(typeof valueTwo).to.equal('bigint')
+            expect(valueTwo).to.equal(targetTwo)
+
             if (errorThree) {
                 console.error(errorThree)
             }
             expect(errorThree).not.to.exist
             expect(typeof valueThree).to.equal('string')
-            expect(valueThree).to.equal(target)
+            expect(valueThree).to.equal(targetThree)
         })
 
         it('Should return an error object if input is invalid and not converting', () => {

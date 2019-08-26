@@ -1,0 +1,22 @@
+{
+    "name": "@micro-fleet/common-browser",
+    "version": "1.4.1",
+    "description": "Contains helpers, models and constants for Frontend.",
+    "dependencies": {
+        "joi": "~13.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "author": {
+        "name": "gennovative",
+        "url": "https://github.com/gennovative"
+    },
+    "engines": {
+        "node": ">=10.4.0"
+    },
+    "license": "MIT",
+    "private": false,
+    "types": "./typings/app.d.ts",
+    "repository": "git@github.com:gennovative/micro-fleet-common-browser.git"
+}

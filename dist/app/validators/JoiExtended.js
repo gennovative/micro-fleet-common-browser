@@ -10,9 +10,19 @@ const bigintRule = {
         this['_flags'].bigint = true; // Set a flag for later use
     },
     validate(params, value, state, options) {
-        const isString = (val) => (typeof val === 'string');
-        const isNumString = (val) => val.match(/^\d+$/);
-        return (isString(value) && isNumString(value))
+        let isBigInt = true;
+        try {
+            // '987654321' => valid
+            // 'ABC876' => invalid
+            // Other non-bigint non-string values are all invalid
+            isBigInt = (typeof value === 'string')
+                ? (typeof BigInt(value) === 'bigint')
+                : (typeof value === 'bigint');
+        }
+        catch (_a) {
+            isBigInt = false;
+        }
+        return isBigInt
             // Everything is OK
             ? value
             // Generate an error, state and options need to be passed
@@ -82,6 +92,25 @@ const joiExtensions = {
         dateStringWrongFormat: 'needs to be a date string compliant with W3C Date and Time Formats ({{format}})',
         dateStringInvalidValue: 'needs all components to have valid values',
     },
+    pre(value, state, options) {
+        const flags = this['_flags'];
+        if (flags.bigint === true) {
+            try {
+                return (options.convert ? BigInt(value) : value);
+            }
+            catch (_a) {
+                return value;
+            }
+        }
+        return value; // Keep the value as it was
+    },
+    // coerce(value: any, state: joi.State, options: joi.ValidationOptions) {
+    //     const flags: GennFlag = this['_flags']
+    //     if (flags.dateString === true) {
+    //         return flags.dateStringTranslator(value)
+    //     }
+    //     return value // Keep the value as it was
+    // },
     rules: [bigintRule, dateStringRule],
 };
 /**

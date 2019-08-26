@@ -17,42 +17,42 @@ export type JoiModelValidatorCreateOptions = {
      * Whether the primary key is composite. Default to `false`.
      * This param is IGNORED if param `schemaMapPk` has value.
      */
-    isCompositePk?: boolean,
+    isCompositeId?: boolean,
 
     /**
      * Whether to validate PK.
      * This param is IGNORED if param `schemaMapPk` has value.
      * Default to be `false`.
      */
-    requirePk?: boolean,
+    requireId?: boolean,
 
     /**
      * Rule to validate model PK.
      */
-    schemaMapPk?: joi.SchemaMap,
+    schemaMapId?: joi.SchemaMap,
 }
 
 export interface IModelValidator<T> {
 
     readonly schemaMap: joi.SchemaMap
 
-    readonly schemaMapPk: joi.SchemaMap
+    readonly schemaMapId: joi.SchemaMap
 
-    readonly isCompositePk: boolean
+    readonly isCompositeId: boolean
 
 
     /**
-     * Validates model PK.
+     * Validates model ID.
      */
-    pk(pk: any): [ValidationError, any]
+    id(id: any): [ValidationError, any]
 
     /**
-     * Validates model for creation operation, which doesn't need `pk` property.
+     * Validates model for creation operation, which doesn't need `id` property.
      */
     whole(target: any, options?: ValidationOptions): [ValidationError, T]
 
     /**
-     * Validates model for modification operation, which requires `pk` property.
+     * Validates model for modification operation, which requires `id` property.
      */
     partial(target: any, options?: ValidationOptions): [ValidationError, Partial<T>]
 

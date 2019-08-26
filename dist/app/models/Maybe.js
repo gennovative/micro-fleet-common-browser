@@ -7,7 +7,7 @@ let _nothing;
  */
 class EmptyMaybeException extends Exceptions_1.Exception {
     constructor() {
-        super('This Maybe is Nothing!', false, EmptyMaybeException);
+        super('This Maybe has Nothing', false, EmptyMaybeException);
     }
 }
 exports.EmptyMaybeException = EmptyMaybeException;
@@ -19,8 +19,10 @@ exports.EmptyMaybeException = EmptyMaybeException;
  */
 class Maybe {
     constructor() {
+        /**
+         * Alias of Maybe.Just
+         */
         this.of = Maybe.Just;
-        // x == null ? _nothing : Maybe.Just(x)
     }
     static Nothing() {
         return _nothing;
@@ -28,13 +30,19 @@ class Maybe {
     static Just(value) {
         return new Just(value);
     }
+    static isJust(target) {
+        return (target instanceof Just);
+    }
+    static isNothing(target) {
+        return (target === _nothing);
+    }
+    static isMaybe(target) {
+        return this.isJust(target) || this.isNothing(target);
+    }
 }
-Maybe.isJust = function (maybe) {
-    return (maybe instanceof Just);
-};
-Maybe.isNothing = function (maybe) {
-    return (maybe === _nothing);
-};
+/**
+ * Alias of Maybe.Just
+ */
 Maybe.of = Maybe.Just;
 exports.Maybe = Maybe;
 class Just extends Maybe {
@@ -44,7 +52,12 @@ class Just extends Maybe {
         /**
          * @override
          */
-        this.orElse = returnThis;
+        this.mapElse = returnThis;
+        /**
+         * @override
+         */
+        this.chainElse = returnThis;
+        Object.freeze(this);
     }
     /**
      * @override
@@ -113,6 +126,7 @@ class Nothing extends Maybe {
          * @override
          */
         this.chain = returnThis;
+        Object.freeze(this);
     }
     /**
      * @override
@@ -135,8 +149,12 @@ class Nothing extends Maybe {
     /**
      * @override
      */
-    orElse(f) {
-        return this.of(f());
+    mapElse(f) {
+        f();
+        return this;
+    }
+    chainElse(f) {
+        return f();
     }
     /**
      * @override

@@ -7,58 +7,58 @@ const ValidationError_1 = require("./ValidationError");
 class JoiModelValidator {
     /**
      * @param {joi.SchemaMap} _schemaMap Rules to validate model properties.
-     * @param {boolean} _isCompositePk Whether the primary key is made of multiple properties. Default to `false`
-     *     This param is IGNORED if param `schemaMapPk` has value.
-     * @param {boolean} requirePk Whether to validate ID.
-     *     This param is IGNORED if param `schemaMapPk` has value.
-     * @param {joi.SchemaMap} _schemaMapId Rule to validate model PK.
+     * @param {boolean} _isCompositeId Whether the primary key is made of multiple properties. Default to `false`
+     *     This param is IGNORED if param `schemaMapId` has value.
+     * @param {boolean} requireId Whether to validate ID.
+     *     This param is IGNORED if param `schemaMapId` has value.
+     * @param {joi.SchemaMap} _schemaMapId Rule to validate model ID.
      */
-    constructor(_schemaMap, _isCompositePk = false, requirePk, _schemaMapPk) {
+    constructor(_schemaMap, _isCompositeId = false, requireId, _schemaMapId) {
         this._schemaMap = _schemaMap;
-        this._isCompositePk = _isCompositePk;
-        this._schemaMapPk = _schemaMapPk;
+        this._isCompositeId = _isCompositeId;
+        this._schemaMapId = _schemaMapId;
         // As default, model ID is a string for 64-bit integer.
         let idSchema = JoiExtended_1.extJoi.genn().bigint().options({ convert: false });
-        if (requirePk) {
+        if (requireId) {
             idSchema = idSchema.required();
         }
-        if (_schemaMapPk) {
-            this._schemaMapPk = _schemaMapPk;
+        if (_schemaMapId) {
+            this._schemaMapId = _schemaMapId;
         }
-        else if (_isCompositePk) {
-            this._schemaMapPk = {
+        else if (_isCompositeId) {
+            this._schemaMapId = {
                 id: idSchema,
                 tenantId: idSchema,
             };
         }
         else {
-            this._schemaMapPk = { id: idSchema };
-            this._compiledPk = idSchema;
+            this._schemaMapId = { id: idSchema };
+            this._compiledId = idSchema;
         }
     }
     /**
      * Builds a new instance of ModelValidatorBase.
      */
-    static create({ schemaMapModel, isCompositePk = false, requirePk = false, schemaMapPk, }) {
-        const validator = new JoiModelValidator(schemaMapModel, isCompositePk, requirePk, schemaMapPk);
+    static create({ schemaMapModel, isCompositeId = false, requireId = false, schemaMapId: schemaMapId, }) {
+        const validator = new JoiModelValidator(schemaMapModel, isCompositeId, requireId, schemaMapId);
         validator.compile();
         return validator;
     }
     get schemaMap() {
         return this._schemaMap;
     }
-    get schemaMapPk() {
-        return this._schemaMapPk;
+    get schemaMapId() {
+        return this._schemaMapId;
     }
-    get isCompositePk() {
-        return this._isCompositePk;
+    get isCompositeId() {
+        return this._isCompositeId;
     }
     /**
-     * @see IModelValidator.pk
+     * @see IModelValidator.id
      */
-    pk(pk) {
-        Guard_1.Guard.assertIsDefined(this._compiledPk, 'Must call `compile` before using this function!');
-        const { error, value } = this._compiledPk.validate(pk);
+    id(id) {
+        Guard_1.Guard.assertIsDefined(this._compiledId, 'Must call `compile` before using this function!');
+        const { error, value } = this._compiledId.validate(id);
         return (error) ? [ValidationError_1.ValidationError.fromJoi(error.details), null] : [null, value];
     }
     /**
@@ -77,17 +77,17 @@ class JoiModelValidator {
      * @see IModelValidator.compile
      */
     compile() {
-        if (!this._compiledPk) {
-            if (this._isCompositePk) {
-                this._compiledPk = joi.object(this._schemaMapPk);
+        if (!this._compiledId) {
+            if (this._isCompositeId) {
+                this._compiledId = joi.object(this._schemaMapId);
             }
             else {
-                // Compile rule for simple PK with only one property
-                const idMap = this.schemaMapPk;
+                // Compile rule for simple ID with only one property
+                const idMap = this.schemaMapId;
                 for (const key in idMap) {
                     /* istanbul ignore else */
                     if (idMap.hasOwnProperty(key)) {
-                        this._compiledPk = idMap[key];
+                        this._compiledId = idMap[key];
                         break; // Only get the first rule
                     }
                 }
@@ -108,8 +108,8 @@ class JoiModelValidator {
             }
         }
         this._compiledPartial = joi.object(partialSchema);
-        this._compiledWhole = this._compiledWhole.keys(this._schemaMapPk);
-        this._compiledPartial = this._compiledPartial.keys(this._schemaMapPk);
+        this._compiledWhole = this._compiledWhole.keys(this._schemaMapId);
+        this._compiledPartial = this._compiledPartial.keys(this._schemaMapId);
     }
     validate(schema, target, options = {}) {
         Guard_1.Guard.assertIsDefined(schema, 'Must call `compile` before using this function!');

@@ -1,5 +1,5 @@
 /// <reference path="./global.d.ts" />
-declare module '@micro-fleet/common-browser/dist/app/models/Exceptions' {
+declare module '@micro-fleet/common-browser/models/Exceptions' {
 	export class Exception implements Error {
 	    readonly message: string;
 	    readonly isCritical: boolean;
@@ -50,7 +50,7 @@ declare module '@micro-fleet/common-browser/dist/app/models/Exceptions' {
 	}
 
 }
-declare module '@micro-fleet/common-browser/dist/app/Guard' {
+declare module '@micro-fleet/common-browser/Guard' {
 	export class Guard {
 	    /**
 	     * Makes sure the specified `target` is not null or undefined.
@@ -122,7 +122,7 @@ declare module '@micro-fleet/common-browser/dist/app/Guard' {
 	}
 
 }
-declare module '@micro-fleet/common-browser/dist/app/interfaces/automapper' {
+declare module '@micro-fleet/common-browser/interfaces/automapper' {
 	/**
 	 * Interface for returning an object with available 'sub' functions
 	 * to enable method chaining (e.g. automapper.createMap().forMember().forMember() ...)
@@ -242,8 +242,8 @@ declare module '@micro-fleet/common-browser/dist/app/interfaces/automapper' {
 	export type IMapCallback = (result: any) => void;
 
 }
-declare module '@micro-fleet/common-browser/dist/app/models/Maybe' {
-	import { Exception } from '@micro-fleet/common-browser/dist/app/models/Exceptions';
+declare module '@micro-fleet/common-browser/models/Maybe' {
+	import { Exception } from '@micro-fleet/common-browser/models/Exceptions';
 	/**
 	 * Represents an error when attempting to get value from a Maybe.Nothing
 	 */
@@ -392,7 +392,7 @@ declare module '@micro-fleet/common-browser/dist/app/models/Maybe' {
 	export {};
 
 }
-declare module '@micro-fleet/common-browser/dist/app/models/PagedData' {
+declare module '@micro-fleet/common-browser/models/PagedData' {
 	/**
 	 * An object that contains paged array of items.
 	 */
@@ -423,9 +423,9 @@ declare module '@micro-fleet/common-browser/dist/app/models/PagedData' {
 	}
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/ValidationError' {
+declare module '@micro-fleet/common-browser/validators/ValidationError' {
 	import * as joi from 'joi';
-	import { MinorException } from '@micro-fleet/common-browser/dist/app/models/Exceptions';
+	import { MinorException } from '@micro-fleet/common-browser/models/Exceptions';
 	/**
 	 * Represents a validation error for a property.
 	 * UI Form should use this information to highlight the particular input.
@@ -454,9 +454,9 @@ declare module '@micro-fleet/common-browser/dist/app/validators/ValidationError'
 	}
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/IModelValidator' {
+declare module '@micro-fleet/common-browser/validators/IModelValidator' {
 	import * as joi from 'joi';
-	import { ValidationError } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
+	import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
 	export interface ValidationOptions extends joi.ValidationOptions {
 	}
 	export type JoiModelValidatorCreateOptions = {
@@ -504,10 +504,10 @@ declare module '@micro-fleet/common-browser/dist/app/validators/IModelValidator'
 	}
 
 }
-declare module '@micro-fleet/common-browser/dist/app/translators/IModelAutoMapper' {
-	import { ICreateMapFluentFunctions } from '@micro-fleet/common-browser/dist/app/interfaces/automapper';
-	import { IModelValidator } from '@micro-fleet/common-browser/dist/app/validators/IModelValidator';
-	import { ValidationError } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
+declare module '@micro-fleet/common-browser/translators/IModelAutoMapper' {
+	import { ICreateMapFluentFunctions } from '@micro-fleet/common-browser/interfaces/automapper';
+	import { IModelValidator } from '@micro-fleet/common-browser/validators/IModelValidator';
+	import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
 	export interface MappingOptions {
 	    /**
 	     * Temporarily turns on or off model validation.
@@ -580,8 +580,8 @@ declare module '@micro-fleet/common-browser/dist/app/translators/IModelAutoMappe
 	}
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/BusinessInvariantError' {
-	import { ValidationError, ValidationErrorItem } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
+declare module '@micro-fleet/common-browser/validators/BusinessInvariantError' {
+	import { ValidationError, ValidationErrorItem } from '@micro-fleet/common-browser/validators/ValidationError';
 	/**
 	 * Represents a business rule violation.
 	 */
@@ -590,7 +590,7 @@ declare module '@micro-fleet/common-browser/dist/app/validators/BusinessInvarian
 	}
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/JoiExtended' {
+declare module '@micro-fleet/common-browser/validators/JoiExtended' {
 	import * as joi from 'joi';
 	export type JoiDateStringOptions = {
 	    /**
@@ -630,10 +630,10 @@ declare module '@micro-fleet/common-browser/dist/app/validators/JoiExtended' {
 	export const extJoi: ExtendedJoi;
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator' {
+declare module '@micro-fleet/common-browser/validators/JoiModelValidator' {
 	import * as joi from 'joi';
-	import { IModelValidator, JoiModelValidatorCreateOptions, ValidationOptions } from '@micro-fleet/common-browser/dist/app/validators/IModelValidator';
-	import { ValidationError } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
+	import { IModelValidator, JoiModelValidatorCreateOptions, ValidationOptions } from '@micro-fleet/common-browser/validators/IModelValidator';
+	import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
 	export class JoiModelValidator<T> implements IModelValidator<T> {
 	    protected _schemaMap: joi.SchemaMap;
 	    protected _isCompositeId: boolean;
@@ -685,19 +685,5 @@ declare module '@micro-fleet/common-browser/dist/app/validators/JoiModelValidato
 	    compile(): void;
 	    protected validate(schema: joi.ObjectSchema, target: any, options?: ValidationOptions): [ValidationError, T];
 	}
-
-}
-declare module '@micro-fleet/common-browser' {
-	export * from '@micro-fleet/common-browser/dist/app/Guard';
-	export * from '@micro-fleet/common-browser/dist/app/interfaces/automapper';
-	export * from '@micro-fleet/common-browser/dist/app/models/Exceptions';
-	export * from '@micro-fleet/common-browser/dist/app/models/Maybe';
-	export * from '@micro-fleet/common-browser/dist/app/models/PagedData';
-	export * from '@micro-fleet/common-browser/dist/app/translators/IModelAutoMapper';
-	export * from '@micro-fleet/common-browser/dist/app/validators/BusinessInvariantError';
-	export * from '@micro-fleet/common-browser/dist/app/validators/IModelValidator';
-	export * from '@micro-fleet/common-browser/dist/app/validators/JoiExtended';
-	export * from '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator';
-	export * from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
 
 }

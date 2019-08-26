@@ -12,10 +12,20 @@ const bigintRule = {
     },
 
     validate(this: joi.ExtensionBoundSchema, params: any, value: any, state: joi.State, options: joi.ValidationOptions) {
-        const isString = (val: any) => (typeof val === 'string')
-        const isNumString = (val: string) => val.match(/^\d+$/)
+        let isBigInt = true
+        try {
+            // '987654321' => valid
+            // 'ABC876' => invalid
+            // Other non-bigint non-string values are all invalid
+            isBigInt = (typeof value === 'string')
+                ? (typeof BigInt(value) === 'bigint')
+                : (typeof value === 'bigint')
+        }
+        catch {
+            isBigInt = false
+        }
 
-        return (isString(value) && isNumString(value))
+        return isBigInt
             // Everything is OK
             ? value
             // Generate an error, state and options need to be passed
@@ -85,6 +95,12 @@ const dateStringRule = {
     },
 }
 
+type GennFlag = {
+    bigint?: boolean,
+    dateString?: boolean,
+    dateStringTranslator?: (dateString: string) => object,
+}
+
 // Working flow:
 // rule.setup => extension.pre => rule.validate => extension.coerce
 const joiExtensions: joi.Extension = {
@@ -103,6 +119,26 @@ const joiExtensions: joi.Extension = {
         dateStringInvalidValue: 'needs all components to have valid values',
     },
 
+    pre(value: any, state: joi.State, options: joi.ValidationOptions) {
+        const flags: GennFlag = this['_flags']
+        if (flags.bigint === true) {
+            try {
+                return (options.convert ? BigInt(value) : value)
+            }
+            catch {
+                return value
+            }
+        }
+        return value // Keep the value as it was
+    },
+
+    // coerce(value: any, state: joi.State, options: joi.ValidationOptions) {
+    //     const flags: GennFlag = this['_flags']
+    //     if (flags.dateString === true) {
+    //         return flags.dateStringTranslator(value)
+    //     }
+    //     return value // Keep the value as it was
+    // },
     rules: [ bigintRule, dateStringRule ],
 }
 
