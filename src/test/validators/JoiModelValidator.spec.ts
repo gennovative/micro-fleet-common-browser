@@ -1,97 +1,90 @@
 import { expect } from 'chai'
 import * as joi from 'joi'
 
-import { JoiModelValidator, extJoi } from '../../app'
 import { SampleModel } from './SampleModel'
+import { JoiModelValidator } from '../../app/validators/JoiModelValidator'
+import { extJoi } from '../../app/validators/JoiExtended'
 
 
 let globalValidator: JoiModelValidator<SampleModel>
 
 describe('JoiModelValidator', () => {
     beforeEach(() => {
-        globalValidator = JoiModelValidator.create<SampleModel>({
+        globalValidator = new JoiModelValidator<SampleModel>({
             schemaMapModel: {
                 name: joi.string().regex(/^[\d\w -]+$/u).max(10).min(3).required(),
                 address: joi.string().required(),
                 age: joi.number().min(15).max(99).integer().optional(),
                 gender: joi.only('male', 'female').optional(),
             },
-            isCompositeId: false,
-            requireId: false,
             schemaMapId: {
-                theID: joi.number().min(1).max(Number.MAX_SAFE_INTEGER),
+                theID: joi.number().min(1).required(),
             },
         })
     })
 
     describe('getters', () => {
         it('schemaMap', () => {
-            expect(globalValidator.schemaMap).to.equal(globalValidator['_schemaMap'])
+            expect(globalValidator.schemaMapModel).to.equal(globalValidator['_schemaMapModel'])
         })
 
         it('schemaMapId', () => {
             expect(globalValidator.schemaMapId).to.equal(globalValidator['_schemaMapId'])
         })
-
-        it('isCompoundPk', () => {
-            expect(globalValidator.isCompositeId).to.equal(globalValidator['_isCompositeId'])
-        })
     }) // END describe 'getters'
 
-    describe('pk', () => {
-        it('Should return the validated single PK if valid', () => {
+    describe('id', () => {
+        it('Should return the validated single ID if valid', () => {
             // Arrange
-            const theID = 999
+            const ID = 999
 
             // Act
-            const [error, pk] = globalValidator.id(theID)
+            const [error, id] = globalValidator.id({ theID: ID })
 
             // Assert
             if (error) { console.error(error) }
             expect(error).not.to.exist
-            expect(pk).to.exist
-            expect(pk).to.equal(theID)
+            expect(id).to.exist
+            expect(id).to.deep.equal({ theID: ID })
         })
 
-        it('Should return the validated compound PK if valid', () => {
+        it('Should return the validated compound ID if valid', () => {
             // Arrange
-            const validator = JoiModelValidator.create<SampleModel>({
+            const validator = new JoiModelValidator<SampleModel>({
                     schemaMapModel: { name: joi.string() },
-                    isCompositeId: true,
-                    requireId: true,
                     schemaMapId: {
                         id: extJoi.genn().bigint().required(),
                         tenantId: extJoi.genn().bigint().required(),
                     },
                 }),
                 target = {
-                    id: BigInt(9007199254740991) + BigInt(999), // Number.MAX_SAFE_INTEGER + 999n
-                    tenantId: BigInt(9007199254740991) + BigInt(888),
+                    id: BigInt('9007199254740991') + BigInt(999), // Number.MAX_SAFE_INTEGER + 999n
+                    tenantId: BigInt('9007199254740991') + BigInt(888),
                 }
 
             // Act
-            const [error, pk] = validator.id(target)
+            const [error, id] = validator.id(target)
 
             // Assert
             if (error) { console.error(error) }
             expect(error).not.to.exist
-            expect(pk).to.exist
-            expect(pk.id).to.equal(target.id)
-            expect(pk.tenantId).to.equal(target.tenantId)
+            expect(id).to.exist
+            expect(id.id).to.equal(target.id)
+            expect(id.tenantId).to.equal(target.tenantId)
         })
 
         it('Should return an error object if invalid', () => {
             // Arrange
-            const theID = 0
+            const ID = 0
 
             // Act
-            const [error, pk] = globalValidator.id(theID)
+            const [error, id] = globalValidator.id({ theID: ID })
 
             // Assert
-            expect(pk).not.to.exist
+            expect(id).not.to.exist
             expect(error).to.exist
-            expect(error.details[0].path.length).to.equal(0)
-            expect(error.details[0].message).to.equal('"value" must be larger than or equal to 1')
+            expect(error.details[0].path.length).to.equal(1)
+            expect(error.details[0].message).to.equal('"theID" must be larger than or equal to 1')
         })
     }) // END describe 'id'
 
@@ -157,62 +150,6 @@ describe('JoiModelValidator', () => {
             expect(value.address).to.equal(target.address)
             expect(value['hobbies']).not.to.exist
             expect(value['loveMovie']).not.to.exist
-        })
-
-        it('Should validate model ID if required', () => {
-            // Arrange
-            const validator = JoiModelValidator.create<SampleModel>({
-                    schemaMapModel: {
-                        name: joi.string().regex(/^[\d\w -]+$/u).max(10).min(3).required(),
-                        address: joi.string().required(),
-                        age: joi.number().min(15).max(99).integer().optional(),
-                        gender: joi.only('male', 'female').optional(),
-                    },
-                    isCompositeId: null,
-                    requireId: true,
-                }),
-                target = {
-                    name: 'Gennova123',
-                    address: 'Unlimited length street name',
-                    age: 18,
-                    gender: 'male',
-                }
-
-            // Act
-            const [error, validated] = validator.whole(target)
-
-            // Assert
-            expect(validated).not.to.exist
-            expect(error).to.exist
-            expect(error.details[0].path.length).to.equal(1)
-            expect(error.details[0].path[0]).to.equal('id')
-            expect(error.details[0].message).to.equal('"id" is required')
-        })
-
-        it('Should validate compound PK if required', () => {
-            // Arrange
-            const validator = JoiModelValidator.create<SampleModel>({
-                schemaMapModel: { name: joi.string() },
-                isCompositeId: true,
-                requireId: true,
-            }),
-            target = {
-                name: 'Gennova123',
-            }
-
-            // Act
-            const [error, validated] = validator.whole(target)
-
-            // Assert
-            expect(validated).not.to.exist
-            expect(error).to.exist
-            expect(error.details.length).to.equal(2)
-            expect(error.details[0].path.length).to.equal(1)
-            expect(error.details[0].path[0]).to.equal('id')
-            expect(error.details[0].message).to.equal('"id" is required')
-            expect(error.details[1].path.length).to.equal(1)
-            expect(error.details[1].path[0]).to.equal('tenantId')
-            expect(error.details[1].message).to.equal('"tenantId" is required')
         })
 
         it('Should return an error object if invalid', () => {
@@ -334,11 +271,13 @@ describe('JoiModelValidator', () => {
             // => No "required" error for `address`.
         })
 
-        it('Should ignore `required` validation, but not allow `null` value', () => {
+        it('Should ignore `required` validation (except ID), but not allow `null` value', () => {
             // Arrange
             const targetOne = {
+                    theID: 1,
                 },
                 targetTwo = {
+                    theID: 2,
                     name: <any>null,
                     age: <any>null,
                 }
@@ -348,6 +287,7 @@ describe('JoiModelValidator', () => {
                 [errorTwo, validatedTwo] = globalValidator.partial(targetTwo)
 
             // Assert: `required` validation is ignored.
+            errorOne && console.error(errorOne)
             expect(validatedOne).to.exist
             expect(errorOne).not.to.exist
 

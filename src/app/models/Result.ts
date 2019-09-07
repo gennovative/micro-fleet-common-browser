@@ -1,6 +1,10 @@
 import { Exception } from './Exceptions'
 
-export type Newable<T = any> = (new (...args: any[]) => T)
+/**
+ * A data type representing a class.
+ */
+type Newable<T = any> = (new (...args: any[]) => T)
+
 
 function returnThis(this: any) {
     return this

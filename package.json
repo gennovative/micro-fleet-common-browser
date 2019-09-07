@@ -1,6 +1,6 @@
 {
     "name": "@micro-fleet/common-browser",
-    "version": "1.4.1",
+    "version": "2.3.0-rc1",
     "description": "Contains helpers, models and constants for Frontend.",
     "scripts": {
         "build": "npm run compile && npm run test",

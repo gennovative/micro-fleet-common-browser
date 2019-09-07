@@ -1,7 +1,7 @@
 .nyc_output
 .vscode
 coverage
-test
+dist/test
 **/*.map
 src
 .editorconfig

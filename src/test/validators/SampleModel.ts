@@ -1,10 +1,12 @@
 import * as joi from 'joi'
 
-import { JoiModelValidator } from '../../app'
+import { JoiModelValidator } from '../../app/validators/JoiModelValidator'
+
 
 
 export class SampleModel {
     public static validator: JoiModelValidator<SampleModel>
+    public static resetValidator = createValidator
 
     public readonly theID: number = undefined // It's IMPORTANT to initialize property with a value.
     public readonly name: string = undefined
@@ -12,18 +14,19 @@ export class SampleModel {
     public readonly age: number = undefined
     public readonly gender: 'male' | 'female' = undefined
 }
+createValidator()
 
-SampleModel.validator = JoiModelValidator.create<SampleModel>({
-    schemaMapModel: {
-        name: joi.string().regex(/^[\d\w -]+$/u).max(10).min(3).required(),
-        address: joi.string().required(),
-        age: joi.number().min(15).max(99).integer()
-            .allow(null).optional(),
-        gender: joi.only('male', 'female').allow(null).optional(),
-    },
-    isCompositeId: null,
-    requireId: false,
-    schemaMapId: {
-        theID: joi.number().min(1).max(Number.MAX_SAFE_INTEGER),
-    },
-})
+function createValidator(): void {
+    SampleModel.validator = new JoiModelValidator<SampleModel>({
+        schemaMapModel: {
+            name: joi.string().regex(/^[\d\w -]+$/u).max(10).min(3).required(),
+            address: joi.string().required(),
+            age: joi.number().min(15).max(99).integer()
+                .allow(null).optional(),
+            gender: joi.only('male', 'female').allow(null).optional(),
+        },
+        schemaMapId: {
+            theID: joi.number().min(1).max(Number.MAX_SAFE_INTEGER).required(),
+        },
+    })
+}

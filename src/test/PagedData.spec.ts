@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 
-import { PagedData } from '../app'
+import { PagedData } from '../app/models/PagedData'
 
 
 describe('PagedData', () => {

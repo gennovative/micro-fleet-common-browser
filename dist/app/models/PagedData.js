@@ -13,7 +13,7 @@ class PagedData {
      * Gets number of contained items
      */
     get length() {
-        return this.items.length;
+        return this._items.length;
     }
     /**
      * Gets total number of items.

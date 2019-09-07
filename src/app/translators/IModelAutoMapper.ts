@@ -1,5 +1,5 @@
 import { ICreateMapFluentFunctions } from '../interfaces/automapper'
-import { IModelValidator } from '../validators/IModelValidator'
+import { IModelValidator } from '../validators/JoiModelValidator'
 import { ValidationError } from '../validators/ValidationError'
 
 

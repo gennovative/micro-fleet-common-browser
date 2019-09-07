@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import * as moment from 'moment'
 
-import { extJoi } from '../../app'
+import { extJoi } from '../../app/validators/JoiExtended'
 
 
 describe('JoiExtended', () => {
