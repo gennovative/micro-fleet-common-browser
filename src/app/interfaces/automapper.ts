@@ -14,9 +14,9 @@ export interface ICreateMapFluentFunctions {
      * @param valueOrFunction The value or function to use for this individual member.
      * @returns {IAutoMapperCreateMapChainingFunctions}
      */
-    forMember: (sourceProperty: string, valueOrFunction: any |
+    forMember(sourceProperty: string, valueOrFunction: any |
                     ((opts: IMemberConfigurationOptions) => any) |
-                    ((opts: IMemberConfigurationOptions, cb: IMemberCallback) => void)) => ICreateMapFluentFunctions
+                    ((opts: IMemberConfigurationOptions, cb: IMemberCallback) => void)): ICreateMapFluentFunctions
 
     /**
      * Customize configuration for an individual source member.
@@ -24,32 +24,32 @@ export interface ICreateMapFluentFunctions {
      * @param sourceMemberConfigFunction The function to use for this individual member.
      * @returns {IAutoMapperCreateMapChainingFunctions}
      */
-    forSourceMember: (sourceProperty: string,
-                        sourceMemberConfigFunction: ((opts: ISourceMemberConfigurationOptions) => any) |
-                                                    ((opts: ISourceMemberConfigurationOptions, cb: IMemberCallback) => void)
-                        ) => ICreateMapFluentFunctions
+    forSourceMember(
+        sourceProperty: string,
+        sourceMemberConfigFunction: ((opts: ISourceMemberConfigurationOptions) => any) |
+            ((opts: ISourceMemberConfigurationOptions, cb: IMemberCallback) => void)
+    ): ICreateMapFluentFunctions
 
     /**
      * Customize configuration for all destination members.
      * @param func The function to use for this individual member.
      * @returns {IAutoMapperCreateMapChainingFunctions}
      */
-    forAllMembers: (func: (destinationObject: any, destinationPropertyName: string, value: any) => void) => ICreateMapFluentFunctions
+    forAllMembers(func: (destinationObject: any, destinationPropertyName: string, value: any) => void): ICreateMapFluentFunctions
 
     /**
      * Ignore all members not specified explicitly.
      */
-    ignoreAllNonExisting: () => ICreateMapFluentFunctions
+    ignoreAllNonExisting(): ICreateMapFluentFunctions
 
     /**
      * Skip normal member mapping and convert using a custom type converter (instantiated during mapping).
      * @param typeConverterClassOrFunction The converter class or function to use when converting.
      */
-    convertUsing: (typeConverterClassOrFunction: ((resolutionContext: IResolutionContext) => any) |
+    convertUsing(typeConverterClassOrFunction: ((resolutionContext: IResolutionContext) => any) |
                                                     ((resolutionContext: IResolutionContext, callback: IMapCallback) => void) |
                                                     ITypeConverter |
-                                                    (new() => ITypeConverter)
-                    ) => void
+                                                    (new() => ITypeConverter)): void
 
     /**
      * Specify to which class type AutoMapper should convert. When specified,
@@ -57,14 +57,14 @@ export interface ICreateMapFluentFunctions {
      * @param typeClass The destination type class.
      * @returns {IAutoMapperCreateMapChainingFunctions}
      */
-    convertToType: (typeClass: new () => any) => ICreateMapFluentFunctions
+    convertToType(typeClass: new () => any): ICreateMapFluentFunctions
 
     /**
      * Specify which profile should be used when mapping.
      * @param {string} profileName The profile name.
      * @returns {IAutoMapperCreateMapChainingFunctions}
      */
-    withProfile: (profileName: string) => void
+    withProfile(profileName: string): void
 }
 
 
@@ -76,12 +76,12 @@ export interface IMemberConfigurationOptions extends ISourceMemberConfigurationO
      * Map from a custom source property name.
      * @param sourcePropertyName The source property to map.
      */
-    mapFrom: (sourcePropertyName: string) => void
+    mapFrom(sourcePropertyName: string): void
 
     /**
      * If specified, the property will only be mapped when the condition is fulfilled.
      */
-    condition: (predicate: ((sourceObject: any) => boolean)) => void
+    condition(predicate: ((sourceObject: any) => boolean)): void
 }
 
 
@@ -93,7 +93,7 @@ export interface ISourceMemberConfigurationOptions extends IMappingConfiguration
      * When this configuration function is used, the property is ignored
      * when mapping.
      */
-    ignore: () => void
+    ignore(): void
 }
 
 
@@ -126,7 +126,7 @@ export interface ITypeConverter {
      * @param {IResolutionContext} resolutionContext Resolution context.
      * @returns {any} Destination object.
      */
-    convert: (resolutionContext: IResolutionContext) => any
+    convert(resolutionContext: IResolutionContext): any
 }
 
 

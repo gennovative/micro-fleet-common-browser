@@ -40,11 +40,11 @@ class Maybe {
         return this.isJust(target) || this.isNothing(target);
     }
 }
+exports.Maybe = Maybe;
 /**
  * Alias of Maybe.Just
  */
 Maybe.of = Maybe.Just;
-exports.Maybe = Maybe;
 class Just extends Maybe {
     constructor(_value) {
         super();

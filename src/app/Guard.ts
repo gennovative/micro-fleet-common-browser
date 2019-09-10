@@ -24,7 +24,7 @@ export class Guard {
      * @throws {InvalidArgumentException} If assertion fails.
      */
     public static assertArgFunction(name: string, target: any, message?: string): void {
-        if (!(typeof target === 'function')) {
+        if (typeof target !== 'function') {
             throw new ex.InvalidArgumentException(name, message || 'Must be a function!')
         }
     }
@@ -91,9 +91,8 @@ export class Guard {
         if (!target) {
             if (isCritical) {
                 throw new ex.CriticalException(message)
-            } else {
-                throw new ex.MinorException(message)
             }
+            throw new ex.MinorException(message)
         }
     }
 
@@ -107,9 +106,8 @@ export class Guard {
         if (target) {
             if (isCritical) {
                 throw new ex.CriticalException(message)
-            } else {
-                throw new ex.MinorException(message)
             }
+            throw new ex.MinorException(message)
         }
     }
 

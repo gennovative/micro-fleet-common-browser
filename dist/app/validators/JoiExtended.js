@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const joi = require("joi");
+const joi = require("@hapi/joi");
 /**
  * Rule to validate native bigint type.
  */
@@ -93,6 +93,7 @@ const joiExtensions = {
         dateStringInvalidValue: 'needs all components to have valid values',
     },
     pre(value, state, options) {
+        // tslint:disable-next-line:no-invalid-this
         const flags = this['_flags'];
         if (flags.bigint === true) {
             try {

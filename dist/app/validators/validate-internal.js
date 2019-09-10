@@ -1,10 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const joi = require("joi");
+const joi = require("@hapi/joi");
 const JoiModelValidator_1 = require("./JoiModelValidator");
 const VALIDATE_META = Symbol();
+function createClassValidationMetadata() {
+    return {
+        schemaMapId: {},
+        schemaMapModel: {},
+        props: {},
+        idProps: new Set(),
+    };
+}
 function getClassValidationMetadata(Class) {
-    return Class[VALIDATE_META] || { schemaMapModel: {}, props: {}, idProps: new Set() };
+    return Class[VALIDATE_META] || createClassValidationMetadata();
 }
 exports.getClassValidationMetadata = getClassValidationMetadata;
 function setClassValidationMetadata(Class, meta) {
@@ -45,29 +53,18 @@ function createJoiValidator(Class) {
 }
 exports.createJoiValidator = createJoiValidator;
 function buildSchemaMapModel(classMeta) {
-    const schemaMapId = {};
-    const schemaMapModel = {};
-    const hasMapId = !isEmpty(classMeta.schemaMapId);
-    const hasMapModel = !isEmpty(classMeta.schemaMapModel);
-    // Decorator @validateClass() overrides all property decorators
-    if (hasMapId && hasMapModel) {
-        return [classMeta.schemaMapId, classMeta.schemaMapModel];
-    }
-    // Build schema maps from property decorators
+    // Property decorators can override class schema maps
     // tslint:disable-next-line:prefer-const
     for (let [prop, meta] of Object.entries(classMeta.props)) {
         const propSchema = buildPropSchema(meta);
         if (classMeta.idProps.has(prop)) {
-            schemaMapId[prop] = propSchema;
+            classMeta.schemaMapId[prop] = propSchema;
         }
         else {
-            schemaMapModel[prop] = propSchema;
+            classMeta.schemaMapModel[prop] = propSchema;
         }
     }
-    return [
-        hasMapId ? classMeta.schemaMapId : schemaMapId,
-        hasMapModel ? classMeta.schemaMapModel : schemaMapModel,
-    ];
+    return [classMeta.schemaMapId, classMeta.schemaMapModel];
 }
 function buildPropSchema(propMeta) {
     return Boolean(propMeta.rawSchema)

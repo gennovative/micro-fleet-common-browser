@@ -1,4 +1,4 @@
-import * as joi from 'joi'
+import * as joi from '@hapi/joi'
 
 import { MinorException } from '../models/Exceptions'
 
@@ -33,7 +33,7 @@ export class ValidationError extends MinorException {
         let details: ValidationErrorItem[]
         /* istanbul ignore next */
         if (joiDetails && joiDetails.length) {
-            details = joiDetails.map(d => ({
+            details = joiDetails.map(d => <ValidationErrorItem>({
                 message: d.message,
                 path: d.path || [],
                 value: (d.context ? d.context.value : d['value']),

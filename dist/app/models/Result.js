@@ -50,11 +50,11 @@ class Result {
         return this.isOk(target) || this.isFailure(target);
     }
 }
+exports.Result = Result;
 /**
  * Alias of Result.Ok
  */
 Result.of = Result.Ok;
-exports.Result = Result;
 class Ok extends Result {
     constructor(_value) {
         super();

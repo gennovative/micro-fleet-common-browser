@@ -122,7 +122,7 @@ declare module '@micro-fleet/common-browser/Guard' {
 
 }
 declare module '@micro-fleet/common-browser/validators/ValidationError' {
-    import * as joi from 'joi';
+    import * as joi from '@hapi/joi';
     import { MinorException } from '@micro-fleet/common-browser/models/Exceptions';
     /**
      * Represents a validation error for a property.
@@ -153,7 +153,7 @@ declare module '@micro-fleet/common-browser/validators/ValidationError' {
 
 }
 declare module '@micro-fleet/common-browser/validators/JoiModelValidator' {
-    import * as joi from 'joi';
+    import * as joi from '@hapi/joi';
     import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
     export interface ValidationOptions extends joi.ValidationOptions {
     }
@@ -214,15 +214,14 @@ declare module '@micro-fleet/common-browser/validators/JoiModelValidator' {
          * @see IModelValidator.partial
          */
         partial(target: any, options?: ValidationOptions): [ValidationError, Partial<T>];
-                                    }
+                                            }
 
 }
-declare module '@micro-fleet/common-browser/models/Translatable' {
-    import * as joi from 'joi';
-    import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
-    import { IModelValidator, JoiModelValidator, JoiModelValidatorConstructorOptions } from '@micro-fleet/common-browser/validators/JoiModelValidator';
+declare module '@micro-fleet/common-browser/validators/validate-internal' {
+    import * as joi from '@hapi/joi';
+    import { JoiModelValidator, JoiModelValidatorConstructorOptions } from '@micro-fleet/common-browser/validators/JoiModelValidator';
     export type PropValidationMetadata = {
-        type?: () => joi.AnySchema;
+        type?(): joi.AnySchema;
         rules?: Array<(prev: joi.AnySchema) => joi.AnySchema>;
         rawSchema?: joi.SchemaLike;
     };
@@ -239,10 +238,14 @@ declare module '@micro-fleet/common-browser/models/Translatable' {
     export function setPropValidationMetadata(Class: Function, propName: string | symbol, meta: PropValidationMetadata): void;
     export function createJoiValidator<T>(Class: Function): JoiModelValidator<T>;
 
+}
+declare module '@micro-fleet/common-browser/models/Translatable' {
+    import { IModelValidator } from '@micro-fleet/common-browser/validators/JoiModelValidator';
+    import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
     export interface ITranslatable<T = any> {
         getValidator(): IModelValidator<T>;
-        from?(source: object): T;
-        fromMany?(source: object[]): T[];
+        from(source: object): T;
+        fromMany(source: object[]): T[];
     } type Newable<T = any> = (new (...args: any[]) => T); type TranslatableClass<U> = Newable<U> & typeof Translatable;
     export abstract class Translatable {
         static getValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT>;
@@ -254,50 +257,52 @@ declare module '@micro-fleet/common-browser/models/Translatable' {
      * Used to decorate model class to equip same functionalities as extending class `Translatable`.
      */
     export function translatable(): ClassDecorator;
+    export {};
 
+}
+declare module '@micro-fleet/common-browser/validators/JoiExtended' {
+    import * as joi from '@hapi/joi';
+    export type JoiDateStringOptions = {
+        /**
+         * Whether the input string is in UTC format.
+         * Default: false.
+         */
+        isUTC?: boolean;
+        /**
+         * Function to convert input string to desired data type.
+         * Default function returns native Date object.
+         */
+        translator?: any;
+    };
+    export type ExtendedJoi = joi.AnySchema & {
+        genn(): {
+            /**
+             * Makes sure input is native bigint type.
+             *
+             * @example extJoi.genn().bigint().validate('98765443123456');
+             * @example extJoi.genn().bigint().validate(98765443123456n, {convert: false});
+             */
+            bigint(): joi.AnySchema;
+            /**
+             * Makes sure input is in W3C Date and Time Formats,
+             * but must have at least year, month, and day.
+             *
+             * @example extJoi.genn().dateString().validate('2019-05-15T09:06:02+07:00');
+             * @example extJoi.genn().dateString({ isUTC: true }).validate('2019-05-15T09:06:02Z');
+             * @example extJoi.genn().dateString({ translator: moment }).validate('2019-05-15T09:06:02-07:00');
+             */
+            dateString(options?: JoiDateStringOptions): joi.AnySchema;
+        };
+    };
     /**
-     * Used to decorate model class to declare validation rules.
-     *
-     * If `validatorOptions.schemaMapModel` is specified, it overrides all properties' decorators
-     * such as @validateProp(), @number(), @defaultAs()...
-     *
-     * If `validatorOptions.schemaMapId` is specified, it overrides the @id() decorator.
-     *
-     * @param {JoiModelValidatorConstructorOptions} validatorOptions The options for creating `JoiModelValidator` instance.
+     * Joi instance with "genn()" extension enabled, including some custom rules.
      */
-    export function validateClass(validatorOptions: JoiModelValidatorConstructorOptions): ClassDecorator;
-    /**
-     * Used to decorate model class' properties to declare complex validation rules.
-     * Note that this decorator overrides other ones such as @defaultAs(), @number(), @only()...
-     *
-     * @param {joi.SchemaLike} schema A single schema rule for this property.
-     *
-     * ```typescript
-     * class ModelA {
-     *   @validateProp(joi.number().positive().precision(2).max(99))
-     *   age: number
-     * }
-     * ```
-     * Not complex enough? Hold my beer!
-     *
-     * ```typescript
-     * class ModelB {
-     *   @boolean()
-     *   hasChildren: boolean
-     *
-     *   @validateProp(
-     *     joi.number().positive()
-     *       .when('hasChildren', {
-     *         is: true,
-     *         then: joi.required(),
-     *         otherwise: joi.forbidden(),
-     *       })
-     *   )
-     *   childrenIDs: number[]
-     * }
-     * ```
-     */
-    export function validateProp(schema: joi.SchemaLike): PropertyDecorator;
+    export const extJoi: ExtendedJoi;
+
+}
+declare module '@micro-fleet/common-browser/validators/validate-decorator' {
+    import * as joi from '@hapi/joi';
+    import { JoiModelValidatorConstructorOptions } from '@micro-fleet/common-browser/validators/JoiModelValidator';
     export type ArrayDecoratorOptions = {
         /**
          * Whether or not to allow specifying a value and
@@ -310,13 +315,21 @@ declare module '@micro-fleet/common-browser/models/Translatable' {
          * Read Joi's docs for more details and examples: https://hapi.dev/family/joi/?v=15.1.1#arrayitemstype
          */
         items: joi.SchemaLike | joi.SchemaLike[];
+        /**
+         * Minimum allowed number of items.
+         */
+        minLength?: number;
+        /**
+         * Maximum allowed number of items.
+         */
+        maxLength?: number;
     };
     /**
      * Used to decorate model class' properties to assert it must be a boolean.
      *
      * ```typescript
      *
-     * import * as joi from 'joi'
+     * import * as joi from '@hapi/joi'
      *
      * const ALLOWED = [ 'id', 'name', 'age' ]
      *
@@ -430,7 +443,7 @@ declare module '@micro-fleet/common-browser/models/Translatable' {
      *
      * ```typescript
      *
-     * import * as joi from 'joi'
+     * import * as joi from '@hapi/joi'
      *
      * enum AccountStatus { ACTIVE = 'active', LOCKED = 'locked' }
      *
@@ -518,52 +531,59 @@ declare module '@micro-fleet/common-browser/models/Translatable' {
      * ```
      */
     export function string(opts?: StringDecoratorOptions): PropertyDecorator;
-
-}
-declare module '@micro-fleet/common-browser/validators/JoiExtended' {
-    import * as joi from 'joi';
-    export type JoiDateStringOptions = {
-        /**
-         * Whether the input string is in UTC format.
-         * Default: false.
-         */
-        isUTC?: boolean;
-        /**
-         * Function to convert input string to desired data type.
-         * Default function returns native Date object.
-         */
-        translator?: any;
-    };
-    export type ExtendedJoi = joi.AnySchema & {
-        genn: () => {
-            /**
-             * Makes sure input is native bigint type.
-             *
-             * @example extJoi.genn().bigint().validate('98765443123456');
-             * @example extJoi.genn().bigint().validate(98765443123456n, {convert: false});
-             */
-            bigint: () => joi.AnySchema;
-            /**
-             * Makes sure input is in W3C Date and Time Formats,
-             * but must have at least year, month, and day.
-             *
-             * @example extJoi.genn().dateString().validate('2019-05-15T09:06:02+07:00');
-             * @example extJoi.genn().dateString({ isUTC: true }).validate('2019-05-15T09:06:02Z');
-             * @example extJoi.genn().dateString({ translator: moment }).validate('2019-05-15T09:06:02-07:00');
-             */
-            dateString: (options?: JoiDateStringOptions) => joi.AnySchema;
-        };
-    };
     /**
-     * Joi instance with "genn()" extension enabled, including some custom rules.
+     * Used to decorate model class to equip same functionalities as extending class `Translatable`.
      */
-    export const extJoi: ExtendedJoi;
+    export function translatable(): ClassDecorator;
+    /**
+     * Used to decorate model class to declare validation rules.
+     *
+     * If `validatorOptions.schemaMapModel` is specified, it overrides all properties' decorators
+     * such as @validateProp(), @number(), @defaultAs()...
+     *
+     * If `validatorOptions.schemaMapId` is specified, it overrides the @id() decorator.
+     *
+     * @param {JoiModelValidatorConstructorOptions} validatorOptions The options for creating `JoiModelValidator` instance.
+     */
+    export function validateClass(validatorOptions: JoiModelValidatorConstructorOptions): ClassDecorator;
+    /**
+     * Used to decorate model class' properties to declare complex validation rules.
+     * Note that this decorator overrides other ones such as @defaultAs(), @number(), @only()...
+     *
+     * @param {joi.SchemaLike} schema A single schema rule for this property.
+     *
+     * ```typescript
+     * class ModelA {
+     *   @validateProp(joi.number().positive().precision(2).max(99))
+     *   age: number
+     * }
+     * ```
+     * Not complex enough? Hold my beer!
+     *
+     * ```typescript
+     * class ModelB {
+     *   @boolean()
+     *   hasChildren: boolean
+     *
+     *   @validateProp(
+     *     joi.number().positive()
+     *       .when('hasChildren', {
+     *         is: true,
+     *         then: joi.required(),
+     *         otherwise: joi.forbidden(),
+     *       })
+     *   )
+     *   childrenIDs: number[]
+     * }
+     * ```
+     */
+    export function validateProp(schema: joi.SchemaLike): PropertyDecorator;
 
 }
-
 declare module '@micro-fleet/common-browser/decorators' {
-    import * as v from '@micro-fleet/common-browser/models/Translatable';
-    export { translatable, ArrayDecoratorOptions, BooleanDecoratorOptions, BigIntDecoratorOptions, NumberDecoratorOptions, DateTimeDecoratorOptions, StringDecoratorOptions, } from '@micro-fleet/common-browser/models/Translatable';
+    import { translatable } from '@micro-fleet/common-browser/models/Translatable';
+    import * as v from '@micro-fleet/common-browser/validators/validate-decorator';
+    export { ArrayDecoratorOptions, BooleanDecoratorOptions, BigIntDecoratorOptions, NumberDecoratorOptions, DateTimeDecoratorOptions, StringDecoratorOptions, } from '@micro-fleet/common-browser/validators/validate-decorator';
     export type Decorators = {
         /**
          * Used to decorate model class' properties to assert it must be a boolean.
@@ -733,7 +753,7 @@ declare module '@micro-fleet/common-browser/decorators' {
         /**
          * Used to decorate model class to equip same functionalities as extending class `Translatable`.
          */
-        translatable: typeof v.translatable;
+        translatable: typeof translatable;
     };
     export const decorators: Decorators;
 
@@ -750,42 +770,42 @@ declare module '@micro-fleet/common-browser/interfaces/automapper' {
          * @param valueOrFunction The value or function to use for this individual member.
          * @returns {IAutoMapperCreateMapChainingFunctions}
          */
-        forMember: (sourceProperty: string, valueOrFunction: any | ((opts: IMemberConfigurationOptions) => any) | ((opts: IMemberConfigurationOptions, cb: IMemberCallback) => void)) => ICreateMapFluentFunctions;
+        forMember(sourceProperty: string, valueOrFunction: any | ((opts: IMemberConfigurationOptions) => any) | ((opts: IMemberConfigurationOptions, cb: IMemberCallback) => void)): ICreateMapFluentFunctions;
         /**
          * Customize configuration for an individual source member.
          * @param sourceProperty The source member property name.
          * @param sourceMemberConfigFunction The function to use for this individual member.
          * @returns {IAutoMapperCreateMapChainingFunctions}
          */
-        forSourceMember: (sourceProperty: string, sourceMemberConfigFunction: ((opts: ISourceMemberConfigurationOptions) => any) | ((opts: ISourceMemberConfigurationOptions, cb: IMemberCallback) => void)) => ICreateMapFluentFunctions;
+        forSourceMember(sourceProperty: string, sourceMemberConfigFunction: ((opts: ISourceMemberConfigurationOptions) => any) | ((opts: ISourceMemberConfigurationOptions, cb: IMemberCallback) => void)): ICreateMapFluentFunctions;
         /**
          * Customize configuration for all destination members.
          * @param func The function to use for this individual member.
          * @returns {IAutoMapperCreateMapChainingFunctions}
          */
-        forAllMembers: (func: (destinationObject: any, destinationPropertyName: string, value: any) => void) => ICreateMapFluentFunctions;
+        forAllMembers(func: (destinationObject: any, destinationPropertyName: string, value: any) => void): ICreateMapFluentFunctions;
         /**
          * Ignore all members not specified explicitly.
          */
-        ignoreAllNonExisting: () => ICreateMapFluentFunctions;
+        ignoreAllNonExisting(): ICreateMapFluentFunctions;
         /**
          * Skip normal member mapping and convert using a custom type converter (instantiated during mapping).
          * @param typeConverterClassOrFunction The converter class or function to use when converting.
          */
-        convertUsing: (typeConverterClassOrFunction: ((resolutionContext: IResolutionContext) => any) | ((resolutionContext: IResolutionContext, callback: IMapCallback) => void) | ITypeConverter | (new () => ITypeConverter)) => void;
+        convertUsing(typeConverterClassOrFunction: ((resolutionContext: IResolutionContext) => any) | ((resolutionContext: IResolutionContext, callback: IMapCallback) => void) | ITypeConverter | (new () => ITypeConverter)): void;
         /**
          * Specify to which class type AutoMapper should convert. When specified,
          * AutoMapper will create an instance of the given type, instead of returning a new object literal.
          * @param typeClass The destination type class.
          * @returns {IAutoMapperCreateMapChainingFunctions}
          */
-        convertToType: (typeClass: new () => any) => ICreateMapFluentFunctions;
+        convertToType(typeClass: new () => any): ICreateMapFluentFunctions;
         /**
          * Specify which profile should be used when mapping.
          * @param {string} profileName The profile name.
          * @returns {IAutoMapperCreateMapChainingFunctions}
          */
-        withProfile: (profileName: string) => void;
+        withProfile(profileName: string): void;
     }
     /**
      * Configuration options for forMember mapping function.
@@ -795,11 +815,11 @@ declare module '@micro-fleet/common-browser/interfaces/automapper' {
          * Map from a custom source property name.
          * @param sourcePropertyName The source property to map.
          */
-        mapFrom: (sourcePropertyName: string) => void;
+        mapFrom(sourcePropertyName: string): void;
         /**
          * If specified, the property will only be mapped when the condition is fulfilled.
          */
-        condition: (predicate: ((sourceObject: any) => boolean)) => void;
+        condition(predicate: ((sourceObject: any) => boolean)): void;
     }
     /**
      * Configuration options for forSourceMember mapping function.
@@ -809,7 +829,7 @@ declare module '@micro-fleet/common-browser/interfaces/automapper' {
          * When this configuration function is used, the property is ignored
          * when mapping.
          */
-        ignore: () => void;
+        ignore(): void;
     }
     export interface IMappingConfigurationOptions {
         /** The source object to map. */
@@ -835,7 +855,7 @@ declare module '@micro-fleet/common-browser/interfaces/automapper' {
          * @param {IResolutionContext} resolutionContext Resolution context.
          * @returns {any} Destination object.
          */
-        convert: (resolutionContext: IResolutionContext) => any;
+        convert(resolutionContext: IResolutionContext): any;
     }
     /**
      * Context information regarding resolution of a destination value
@@ -1005,6 +1025,7 @@ declare module '@micro-fleet/common-browser/models/Maybe' {
          */
         toString(): string;
     }
+    export {};
 
 }
 declare module '@micro-fleet/common-browser/models/PagedData' {
@@ -1215,82 +1236,7 @@ declare module '@micro-fleet/common-browser/models/Result' {
          */
         toString(): string;
     }
-
-}
-declare module '@micro-fleet/common-browser/translators/IModelAutoMapper' {
-    import { ICreateMapFluentFunctions } from '@micro-fleet/common-browser/interfaces/automapper';
-    import { IModelValidator } from '@micro-fleet/common-browser/validators/JoiModelValidator';
-    import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
-    export interface MappingOptions {
-        /**
-         * Temporarily turns on or off model validation.
-         * Can only be turned on if validator is provided to constructor.
-         */
-        enableValidation?: boolean;
-        /**
-         * If specified, gives validation error to this callback. Otherwise, throw error.
-         */
-        errorCallback?: (err: ValidationError) => void;
-    }
-    export interface IModelAutoMapper<T extends Object> {
-        /**
-         * Turns on or off model validation before translating.
-         * Is set to `true` if validator is passed to class constructor.
-         */
-        enableValidation: boolean;
-        /**
-         * Gets the internal AutoMapper instance for advanced configuration.
-         */
-        readonly internalMapper: ICreateMapFluentFunctions;
-        /**
-         * Gets the validator.
-         */
-        readonly validator: IModelValidator<T>;
-        /**
-         * Copies properties from `sources` to dest then optionally validates
-         * the result (depends on `enableValidation`).
-         * If `enableValidation` is turned off, it works just like native `Object.assign()` function,
-         * therefore, use `Object.assign()` for better performance if validation is not needed.
-         * Note that it uses `partial()` internally, hence `required` validation is IGNORED.
-         *
-         * @throws {ValidationError}
-         */
-        merge(dest: Partial<T>, sources: Partial<T> | Partial<T>[], options?: MappingOptions): Partial<T>;
-        /**
-         * Validates then converts an object to type <T>.
-         * but ONLY properties with value are validated and copied.
-         * Note that `required` validation is IGNORED.
-         * @param {object} source The object to be translated.
-         *
-         * @throws {ValidationError} If no `errorCallback` is provided.
-         */
-        partial(source: object, options?: MappingOptions): Partial<T>;
-        /**
-         * Validates then converts a list of objects to type <T>.
-         * but ONLY properties with value are validated and copied.
-         * Note that `required` validation is IGNORED.
-         * @param {object[]} sources A list of objects to be translated.
-         *
-         * @throws {ValidationError} If no `errorCallback` is provided.
-         */
-        partialMany(sources: object[], options?: MappingOptions): Partial<T>[];
-        /**
-         * Validates then converts an object to type <T>.
-         * ALL properties are validated and copied regardless with or without value.
-         * @param {object} source The object to be translated.
-         *
-         * @throws {ValidationError} If no `errorCallback` is provided.
-         */
-        whole(source: object, options?: MappingOptions): T;
-        /**
-         * Validates then converts a list of objects to type <T>.
-         * ALL properties are validated and copied regardless with or without value.
-         * @param {object[]} sources The list of objects to be translated.
-         *
-         * @throws {ValidationError} If no `errorCallback` is provided.
-         */
-        wholeMany(sources: object[], options?: MappingOptions): T[];
-    }
+    export {};
 
 }
 declare module '@micro-fleet/common-browser/validators/BusinessInvariantError' {

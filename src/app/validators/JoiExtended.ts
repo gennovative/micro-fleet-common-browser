@@ -1,4 +1,4 @@
-import * as joi from 'joi'
+import * as joi from '@hapi/joi'
 
 /**
  * Rule to validate native bigint type.
@@ -98,7 +98,7 @@ const dateStringRule = {
 type GennFlag = {
     bigint?: boolean,
     dateString?: boolean,
-    dateStringTranslator?: (dateString: string) => object,
+    dateStringTranslator?(dateString: string): object;
 }
 
 // Working flow:
@@ -120,6 +120,7 @@ const joiExtensions: joi.Extension = {
     },
 
     pre(value: any, state: joi.State, options: joi.ValidationOptions) {
+        // tslint:disable-next-line:no-invalid-this
         const flags: GennFlag = this['_flags']
         if (flags.bigint === true) {
             try {
@@ -156,14 +157,14 @@ export type JoiDateStringOptions = {
 }
 
 export type ExtendedJoi = joi.AnySchema & {
-    genn: () => {
+    genn(): {
         /**
          * Makes sure input is native bigint type.
          *
          * @example extJoi.genn().bigint().validate('98765443123456');
          * @example extJoi.genn().bigint().validate(98765443123456n, {convert: false});
          */
-        bigint: () => joi.AnySchema,
+        bigint(): joi.AnySchema;
 
         /**
          * Makes sure input is in W3C Date and Time Formats,
@@ -173,8 +174,7 @@ export type ExtendedJoi = joi.AnySchema & {
          * @example extJoi.genn().dateString({ isUTC: true }).validate('2019-05-15T09:06:02Z');
          * @example extJoi.genn().dateString({ translator: moment }).validate('2019-05-15T09:06:02-07:00');
          */
-        dateString: (options?: JoiDateStringOptions) => joi.AnySchema,
-    },
+        dateString(options?: JoiDateStringOptions): joi.AnySchema; };
 }
 
 /**

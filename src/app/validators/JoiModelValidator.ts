@@ -1,9 +1,10 @@
-import * as joi from 'joi'
+import * as joi from '@hapi/joi'
 
 import { Guard } from '../Guard'
 import { ValidationError } from './ValidationError'
 
 
+// tslint:disable-next-line:interface-name
 export interface ValidationOptions extends joi.ValidationOptions {
     // Re-brand this interface
 }
@@ -135,25 +136,31 @@ export class JoiModelValidator<T>
     }
 
     private _compileWholeSchema(): void {
-        // Whole validation does not check required ID.
-        this._compiledWhole = joi.object(this._schemaMapModel)
+        this._compiledWhole = joi.object({
+            // Whole validation does not required ID.
+            ...this._optionalize(this._schemaMapId),
+            ...this._schemaMapModel,
+        })
     }
 
     private _compilePartialSchema(): void {
-        const wholeSchema = this._schemaMapModel
+        this._compiledPartial = joi.object({
+            // Partially validation checks required ID.
+            ...this._schemaMapId,
+            ...this._optionalize(this._schemaMapModel),
+        })
+    }
 
-        // Make all rules optional for partial schema.
-        const partialSchema: joi.SchemaMap = {
-            ...this._schemaMapId, // Partially validation checks required ID.
-        }
-        for (const key in wholeSchema) {
-            const rule = wholeSchema[key] as joi.Schema
+    private _optionalize(schemaMap: joi.SchemaMap): joi.SchemaMap {
+        const optionalMap: joi.SchemaMap = {}
+        for (const key in schemaMap) {
+            const rule = schemaMap[key] as joi.Schema
             /* istanbul ignore else */
             if (typeof rule.optional === 'function') {
-                partialSchema[key] = rule.optional()
+                optionalMap[key] = rule.optional()
             }
         }
-        this._compiledPartial = joi.object(partialSchema)
+        return optionalMap
     }
 
     private _validate(schema: joi.ObjectSchema, target: any, options: ValidationOptions = {}): [ValidationError, T] {

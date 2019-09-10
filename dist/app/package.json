@@ -1,6 +1,6 @@
 {
     "name": "@micro-fleet/common-browser",
-    "version": "2.3.0-rc1",
+    "version": "2.3.0-rc3",
     "description": "Contains helpers, models and constants for Frontend.",
     "scripts": {
         "build": "npm run compile && npm run test",
@@ -9,30 +9,30 @@
         "dedup": "rimraf node_modules/**/node_modules/**/typings",
         "compile": "npm run clean && npm run lint && tsc --pretty",
         "release": "npm run build && npm run definition",
-        "test": "nyc --reporter=json --reporter=html --include dist/app/**/*.js mocha --recursive dist/test",
-        "lint": "tslint --fix 'src/**/*.ts'",
+        "test": "nyc --extension=.ts --reporter=json --reporter=html --include dist/app/**/*.js --include src/app/**/*.ts mocha --recursive dist/test",
+        "lint": "tslint --fix -p tsconfig.json --exclude '**/*.d.ts'",
         "watch": "npm run clean && npm run lint && tsc --watch --pretty"
     },
     "dependencies": {
-        "joi": "~13.0"
+        "@hapi/joi": "~15.1"
     },
     "devDependencies": {
-        "@types/chai": "~4.1",
-        "@types/chai-spies": "~0.0.1",
-        "@types/debug": "~0.0.30",
-        "@types/joi": "~14.3",
+        "@types/chai": "~4.2",
+        "@types/chai-spies": "~1.0",
+        "@types/debug": "~4.1",
+        "@types/hapi__joi": "~15.0",
         "@types/lodash": "~4.14",
         "@types/mocha": "~5.2",
-        "chai": "~4.1",
-        "chai-spies": "git://github.com/chaijs/chai-spies.git#b11aeebf",
-        "fs-extra": "~6.0",
-        "mocha": "~5.2",
+        "chai": "~4.2",
+        "chai-spies": "~1.0",
+        "fs-extra": "~8.1",
+        "mocha": "~6.2",
         "moment": "~2.24",
-        "nyc": "~13.3",
-        "rimraf": "~2.6",
-        "ts-declarator": "~1.0",
-        "tslint": "~5.11",
-        "typescript": "~3.3"
+        "nyc": "~14.1",
+        "rimraf": "~3.0",
+        "ts-generator": "0.0.8",
+        "tslint": "~5.19",
+        "typescript": "~3.6"
     },
     "publishConfig": {
         "access": "public"

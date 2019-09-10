@@ -1,7 +1,6 @@
-import * as joi from 'joi'
+import * as joi from '@hapi/joi'
 
 import { JoiModelValidator } from '../../app/validators/JoiModelValidator'
-
 
 
 export class SampleModel {

@@ -3,13 +3,10 @@ import { createJoiValidator } from '../validators/validate-internal'
 import { ValidationError } from '../validators/ValidationError'
 
 
-// Verbose and ugly workaround for correct typing with static method inheritance
-// https://github.com/microsoft/TypeScript/issues/5862
-
 export interface ITranslatable<T = any> {
     getValidator(): IModelValidator<T>
-    from?(source: object): T
-    fromMany?(source: object[]): T[]
+    from(source: object): T
+    fromMany(source: object[]): T[]
 }
 
 

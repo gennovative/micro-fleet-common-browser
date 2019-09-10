@@ -50,40 +50,4 @@ function copyStatic(SrcClass, DestClass, props = []) {
         }
     });
 }
-/*
-function getTranslator<T>(TargetClass: Newable<T>): IModelAutoMapper<T> {
-    let translator = Reflect.getMetadata(TRANSLATOR, TargetClass)
-    if (!translator) {
-        translator = createTranslator<T>(TargetClass)
-        Reflect.defineMetadata(TRANSLATOR, translator, TargetClass)
-    }
-    return Reflect.getMetadata(TRANSLATOR, TargetClass)
-}
-
-function createTranslator<T>(TargetClass: Newable<T>): IModelAutoMapper<T> {
-    return new ModelAutoMapper(TargetClass, getValidator<T>(TargetClass))
-}
-
-function getValidator<T>(TargetClass: Newable<T>): IModelValidator<T> {
-    let validator = Reflect.getMetadata(VALIDATOR, TargetClass)
-    // "validator" may be `null` when class doesn't need validating
-    if (validator === undefined) {
-        validator = createValidator(TargetClass)
-        Reflect.defineMetadata(VALIDATOR, validator, TargetClass)
-    }
-    return validator
-}
-
-function createValidator<T>(TargetClass: Newable<T>): IModelValidator<T> {
-    return createJoiValidator(TargetClass)
-}
-
-function from<T>(TargetClass: Newable<T>, source: object): T {
-    return getTranslator<T>(TargetClass).whole(source)
-}
-
-function fromMany<T>(TargetClass: Newable<T>, source: object[]): T[] {
-    return getTranslator<T>(TargetClass).wholeMany(source)
-}
-//*/
 //# sourceMappingURL=Translatable.js.map

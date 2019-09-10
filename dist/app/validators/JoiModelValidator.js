@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const joi = require("joi");
+const joi = require("@hapi/joi");
 const Guard_1 = require("../Guard");
 const ValidationError_1 = require("./ValidationError");
 class JoiModelValidator {
@@ -48,24 +48,24 @@ class JoiModelValidator {
         this._compiledId = joi.object(this._schemaMapId);
     }
     _compileWholeSchema() {
-        // Whole validation does not check required ID.
-        this._compiledWhole = joi.object(this._schemaMapModel);
+        this._compiledWhole = joi.object(Object.assign(Object.assign({}, this._optionalize(this._schemaMapId)), this._schemaMapModel));
     }
     _compilePartialSchema() {
-        const wholeSchema = this._schemaMapModel;
-        // Make all rules optional for partial schema.
-        const partialSchema = Object.assign({}, this._schemaMapId);
-        for (const key in wholeSchema) {
-            const rule = wholeSchema[key];
+        this._compiledPartial = joi.object(Object.assign(Object.assign({}, this._schemaMapId), this._optionalize(this._schemaMapModel)));
+    }
+    _optionalize(schemaMap) {
+        const optionalMap = {};
+        for (const key in schemaMap) {
+            const rule = schemaMap[key];
             /* istanbul ignore else */
             if (typeof rule.optional === 'function') {
-                partialSchema[key] = rule.optional();
+                optionalMap[key] = rule.optional();
             }
         }
-        this._compiledPartial = joi.object(partialSchema);
+        return optionalMap;
     }
     _validate(schema, target, options = {}) {
-        const opts = Object.assign({}, this._defaultOpts, options);
+        const opts = Object.assign(Object.assign({}, this._defaultOpts), options);
         const { error, value } = schema.validate(target, opts);
         return (error) ? [ValidationError_1.ValidationError.fromJoi(error.details), null] : [null, value];
     }
