@@ -1,21 +1,17 @@
-import { Exception } from './Exceptions'
-
-/**
- * A data type representing a class.
- */
-type Newable<T = any> = (new (...args: any[]) => T)
+import { Exception, ExceptionConstructor } from './Exceptions'
 
 
 function returnThis(this: any) {
     return this
 }
 
+
 /**
  * Represents an error when attempting to get value from a Result.Failure
  */
 export class NoValueFromFailureResultException extends Exception {
-    constructor() {
-        super('Failure Result has no value', false, NoValueFromFailureResultException)
+    constructor(name: string) {
+        super(`${name} Result has no value`, null, false, NoValueFromFailureResultException)
     }
 }
 
@@ -23,8 +19,8 @@ export class NoValueFromFailureResultException extends Exception {
  * Represents an error when attempting to get error from a Result.Ok
  */
 export class NoErrorFromOkResultException extends Exception {
-    constructor() {
-        super('Ok Result has no error', false, NoErrorFromOkResultException)
+    constructor(name: string) {
+        super(`${name} Result has no error`, null, false, NoErrorFromOkResultException)
     }
 }
 
@@ -35,12 +31,12 @@ export class NoErrorFromOkResultException extends Exception {
  */
 export abstract class Result<TOk = any, TFail = any> {
 
-    public static Failure<TO, TF>(reason: TF): Result<TO, TF> {
-        return new Failure<TF>(reason)
+    public static Failure<TO, TF>(reason: TF, name: string = 'Failure'): Result<TO, TF> {
+        return new Failure<TF>(reason, name)
     }
 
-    public static Ok<TO>(value: TO): Result<TO> {
-        return new Ok<TO>(value)
+    public static Ok<TO>(value: TO, name: string = 'Ok'): Result<TO> {
+        return new Ok<TO>(value, name)
     }
 
     public static isOk(target: any): target is Ok<any> {
@@ -121,7 +117,11 @@ export abstract class Result<TOk = any, TFail = any> {
      * Throws the error if Failure, or does nothing if Ok.
      * @param ExceptionClass The class to wrap error
      */
-    public abstract throwError(ExceptionClass?: Newable): void
+    public abstract throwErrorIfAny(ExceptionClass?: ExceptionConstructor, message?: string): void
+
+
+    constructor(protected $name: string) {
+    }
 }
 
 class Ok<T> extends Result<T, any> {
@@ -144,7 +144,7 @@ class Ok<T> extends Result<T, any> {
      * @override
      */
     public get error(): any {
-        throw new NoErrorFromOkResultException()
+        throw new NoErrorFromOkResultException(this.$name)
     }
 
     /**
@@ -155,8 +155,8 @@ class Ok<T> extends Result<T, any> {
     }
 
 
-    constructor(private _value: T) {
-        super()
+    constructor(private _value: T, name: string) {
+        super(name)
         Object.freeze(this)
     }
 
@@ -201,7 +201,7 @@ class Ok<T> extends Result<T, any> {
     /**
      * @override
      */
-    public throwError(ExceptionClass?: Newable): void {
+    public throwErrorIfAny(ExceptionClass?: ExceptionConstructor, message?: string): void {
         return
     }
 
@@ -209,7 +209,7 @@ class Ok<T> extends Result<T, any> {
      * @override
      */
     public toString() {
-        return `Result.Ok: ${this._value}`
+        return `Result.Ok(${this._value}, ${this.$name})`
     }
 }
 
@@ -240,12 +240,12 @@ class Failure<T = any> extends Result<any, T> {
      * @override
      */
     public get value(): any {
-        throw new NoValueFromFailureResultException()
+        throw new NoValueFromFailureResultException(this.$name)
     }
 
 
-    constructor(private _reason: T) {
-        super()
+    constructor(private _reason: T, name: string) {
+        super(name)
         Object.freeze(this)
     }
 
@@ -286,9 +286,10 @@ class Failure<T = any> extends Result<any, T> {
     /**
      * @override
      */
-    public throwError(ExceptionClass?: Newable): void {
+    public throwErrorIfAny(ExceptionClass?: ExceptionConstructor,
+            message: string = 'An error is thrown from Failure Result'): void {
         if (ExceptionClass) {
-            throw new ExceptionClass(this._reason)
+            throw new ExceptionClass(`Thrown by Result.Failure${this.$name}: ${message}`, this._reason)
         }
         throw this._reason
     }
@@ -297,6 +298,6 @@ class Failure<T = any> extends Result<any, T> {
      * @override
      */
     public toString() {
-        return `Result.Failure: ${this._reason}`
+        return `Result.Failure(${this._reason}, ${this.$name})`
     }
 }

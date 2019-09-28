@@ -13,12 +13,20 @@ export type JoiModelValidatorConstructorOptions = {
     /**
      * Rules to validate model properties.
      */
-    schemaMapModel: joi.SchemaMap,
+    schemaMapModel?: joi.SchemaMap,
 
     /**
      * Rule to validate model ID.
      */
     schemaMapId?: joi.SchemaMap,
+
+    /**
+     * Raw Joi Schema.
+     *
+     * If specified, `schemaMapModel` and `schemaMapId` options will be ignored,
+     * `partial` methods will behave the same as `whole`.
+     */
+    rawSchema?: joi.AnySchema,
 
     /**
      * Default options which can be override by passing "options" parameter
@@ -62,17 +70,18 @@ export class JoiModelValidator<T>
     /**
      * Compiled rules for model properties.
      */
-    private _compiledWhole: joi.ObjectSchema
+    private _compiledWhole: joi.AnySchema
 
     /**
      * Compiled rules for model properties, but all of them are OPTIONAL.
      * Used for patch operation.
      */
-    private _compiledPartial: joi.ObjectSchema
+    private _compiledPartial: joi.AnySchema
 
 
     private _schemaMapModel: joi.SchemaMap
     private _schemaMapId: joi.SchemaMap
+    private _rawSchema: joi.AnySchema
     private _defaultOpts: ValidationOptions
 
 
@@ -84,7 +93,10 @@ export class JoiModelValidator<T>
             ...options.joiOptions,
         }
         this._schemaMapId = options.schemaMapId
+        Guard.assertIsTruthy(options.schemaMapModel || options.rawSchema,
+            'Either "schemaMapModel" or "rawSchema" option must be specified.')
         this._schemaMapModel = options.schemaMapModel
+        this._rawSchema = options.rawSchema
     }
 
 
@@ -106,7 +118,7 @@ export class JoiModelValidator<T>
             this._compileIdSchema()
         }
         const { error, value } = this._compiledId.validate<any>(id)
-        return (error) ? [ ValidationError.fromJoi(error.details), null] : [null, value]
+        return (error) ? [ ValidationError.fromJoi(error), null] : [null, value]
     }
 
     /**
@@ -136,7 +148,7 @@ export class JoiModelValidator<T>
     }
 
     private _compileWholeSchema(): void {
-        this._compiledWhole = joi.object({
+        this._compiledWhole = this._rawSchema || joi.object({
             // Whole validation does not required ID.
             ...this._optionalize(this._schemaMapId),
             ...this._schemaMapModel,
@@ -144,7 +156,7 @@ export class JoiModelValidator<T>
     }
 
     private _compilePartialSchema(): void {
-        this._compiledPartial = joi.object({
+        this._compiledPartial = this._rawSchema || joi.object({
             // Partially validation checks required ID.
             ...this._schemaMapId,
             ...this._optionalize(this._schemaMapModel),
@@ -163,7 +175,7 @@ export class JoiModelValidator<T>
         return optionalMap
     }
 
-    private _validate(schema: joi.ObjectSchema, target: any, options: ValidationOptions = {}): [ValidationError, T] {
+    private _validate(schema: joi.AnySchema, target: any, options: ValidationOptions = {}): [ValidationError, T] {
         const opts = {
             ...this._defaultOpts,
             ...options,
@@ -171,6 +183,6 @@ export class JoiModelValidator<T>
 
         const { error, value } = schema.validate<T>(target, opts)
 
-        return (error) ? [ ValidationError.fromJoi(error.details), null] : [null, value]
+        return (error) ? [ ValidationError.fromJoi(error), null] : [null, value]
     }
 }

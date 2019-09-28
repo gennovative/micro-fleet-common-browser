@@ -29,7 +29,19 @@ export type ValidationErrorItem = {
  */
 export class ValidationError extends MinorException {
 
-    public static fromJoi(joiDetails: joi.ValidationErrorItem[]): ValidationError {
+    /**
+     * Constructs an instance of MicroFleet's `ValidationError` from
+     * an instance of Joi's `ValidationError`.
+     */
+    public static fromJoi(joiError: joi.ValidationError): ValidationError {
+        return ValidationError.fromJoiDetails(joiError.details)
+    }
+
+    /**
+     * Constructs an instance of MicroFleet's `ValidationError` from
+     * "details" property of Joi's `ValidationError`.
+     */
+    public static fromJoiDetails(joiDetails: joi.ValidationErrorItem[]): ValidationError {
         let details: ValidationErrorItem[]
         /* istanbul ignore next */
         if (joiDetails && joiDetails.length) {
@@ -42,11 +54,32 @@ export class ValidationError extends MinorException {
         return new ValidationError(details || [])
     }
 
-    constructor(
-        public readonly details: ValidationErrorItem[],
-    ) {
+
+    public readonly details: ValidationErrorItem[]
+
+
+    /**
+     * @param {string} message The message to be wrapped in a `ValidationErrorItem`.
+     */
+    constructor(message: string)
+    // tslint:disable-next-line: unified-signatures
+    constructor(detail: ValidationErrorItem)
+    // tslint:disable-next-line: unified-signatures
+    constructor(details: ValidationErrorItem[])
+    constructor(details: string | ValidationErrorItem | ValidationErrorItem[]) {
         super()
         this.name = 'ValidationError'
         Error.captureStackTrace(this, ValidationError)
+        if (typeof details === 'string') {
+            this.details = [{
+                message: details,
+            }]
+        }
+        else if (Array.isArray(details)) {
+            this.details = details
+        }
+        else {
+            this.details = [details]
+        }
     }
 }

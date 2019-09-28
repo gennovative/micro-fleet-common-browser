@@ -1,13 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Exceptions_1 = require("./Exceptions");
-let _nothing;
 /**
  * Represents an error when attempting to get value from a Maybe.Nothing
  */
 class EmptyMaybeException extends Exceptions_1.Exception {
-    constructor() {
-        super('This Maybe has Nothing', false, EmptyMaybeException);
+    constructor(name) {
+        super(`This ${name} Maybe has Nothing`, null, false, EmptyMaybeException);
     }
 }
 exports.EmptyMaybeException = EmptyMaybeException;
@@ -18,23 +17,33 @@ exports.EmptyMaybeException = EmptyMaybeException;
  * and V8 Maybe: https://v8docs.nodesource.com/node-9.3/d9/d4b/classv8_1_1_maybe.html
  */
 class Maybe {
-    constructor() {
+    constructor($name) {
+        this.$name = $name;
         /**
          * Alias of Maybe.Just
          */
         this.of = Maybe.Just;
     }
-    static Nothing() {
-        return _nothing;
+    /**
+     * Creates an empty Maybe which throws `EmptyMaybeException` if attempting to get value.
+     * @param {string} name The debugging-friendly name to included in error message or `toString()` result.
+     */
+    static Nothing(name = 'Nothing') {
+        return new Nothing(name);
     }
-    static Just(value) {
-        return new Just(value);
+    /**
+     * Creates a Maybe wrapping a value.
+     * @param {T} value The value to be wrapped, it may be anything even `null` or `undefined`.
+     * @param {string} name The debugging-friendly name to included in error message or `toString()` result.
+     */
+    static Just(value, name = 'Just') {
+        return new Just(value, name);
     }
     static isJust(target) {
         return (target instanceof Just);
     }
     static isNothing(target) {
-        return (target === _nothing);
+        return (target instanceof Nothing);
     }
     static isMaybe(target) {
         return this.isJust(target) || this.isNothing(target);
@@ -46,8 +55,8 @@ exports.Maybe = Maybe;
  */
 Maybe.of = Maybe.Just;
 class Just extends Maybe {
-    constructor(_value) {
-        super();
+    constructor(_value, name) {
+        super(name);
         this._value = _value;
         /**
          * @override
@@ -105,15 +114,15 @@ class Just extends Maybe {
      * @override
      */
     toString() {
-        return `Maybe.Just(${this._value})`;
+        return `Maybe.Just(${this._value}, ${this.$name})`;
     }
 }
 function returnThis() {
     return this;
 }
 class Nothing extends Maybe {
-    constructor() {
-        super();
+    constructor(name) {
+        super(name);
         /**
          * @override
          */
@@ -144,7 +153,7 @@ class Nothing extends Maybe {
      * @override
      */
     get value() {
-        throw new EmptyMaybeException();
+        throw new EmptyMaybeException(this.$name);
     }
     /**
      * @override
@@ -166,8 +175,7 @@ class Nothing extends Maybe {
      * @override
      */
     toString() {
-        return `Maybe.Nothing()`;
+        return `Maybe.Nothing(${this.$name})`;
     }
 }
-_nothing = new Nothing;
 //# sourceMappingURL=Maybe.js.map
