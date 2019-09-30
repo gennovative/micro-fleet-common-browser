@@ -267,14 +267,14 @@ declare module '@micro-fleet/common-browser/dist/app/models/Translatable' {
     import { ValidationError } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
     export interface ITranslatable<T = any> {
         getValidator(): IModelValidator<T>;
-        from(source: object): T;
-        fromMany(source: object[]): T[];
+        from(source: object): [ValidationError, T];
+        fromMany(source: object[]): Array<[ValidationError, T]>;
     } type Newable<T = any> = (new (...args: any[]) => T); type TranslatableClass<U> = Newable<U> & typeof Translatable;
     export abstract class Translatable {
         static getValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT>;
         protected static $createValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT>;
         static from<FT extends Translatable>(this: TranslatableClass<FT>, source: object): [ValidationError, FT];
-        static fromMany<FT extends Translatable>(this: TranslatableClass<FT>, source: object[]): [Array<ValidationError>, Array<FT>];
+        static fromMany<FT extends Translatable>(this: TranslatableClass<FT>, source: object[]): Array<[ValidationError, FT]>;
     }
     /**
      * Used to decorate model class to equip same functionalities as extending class `Translatable`.

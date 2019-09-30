@@ -22,15 +22,8 @@ class Translatable {
         if (!source) {
             return null;
         }
-        const errors = [];
-        const values = [];
         // tslint:disable-next-line: prefer-const
-        for (let s of source) {
-            const [error, value] = this.getValidator().whole(s);
-            error && errors.push(error);
-            value && values.push(value);
-        }
-        return [errors, values];
+        return source.map(s => this.getValidator().whole(s));
     }
 }
 exports.Translatable = Translatable;
