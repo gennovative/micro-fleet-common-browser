@@ -194,15 +194,12 @@ export type DateTimeDecoratorOptions = {
  * }
  * ```
  */
-export function datetime(opts: DateTimeDecoratorOptions = { convert: false}): PropertyDecorator {
+export function datetime({isUTC, translator, ...opts}: DateTimeDecoratorOptions = { convert: false}): PropertyDecorator {
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const propMeta: v.PropValidationMetadata = v.getPropValidationMetadata(proto.constructor, propName)
         propMeta.type = () => extJoi.genn()
-            .dateString({
-                isUTC: opts.isUTC,
-                translator: opts.translator,
-            })
+            .dateString({ isUTC, translator })
             .options(opts)
         v.setPropValidationMetadata(proto.constructor, propName, propMeta)
     }
