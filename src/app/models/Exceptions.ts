@@ -1,10 +1,10 @@
+// tslint:disable-next-line:no-magic-numbers
 Error.stackTraceLimit = 20
 
 export class Exception implements Error {
 
-    public stack: string
     public name: string
-    public details: any
+    public stack: string
 
 
     /**
@@ -15,6 +15,7 @@ export class Exception implements Error {
      */
     constructor(
             public readonly message: string = '',
+            public details?: object | string,
             public readonly isCritical: boolean = true,
             exceptionClass?: Function) {
 
@@ -37,11 +38,13 @@ export class Exception implements Error {
  */
 export class CriticalException extends Exception {
 
-    constructor(message?: string) {
-        super(message, true, CriticalException)
+    constructor(message?: string, details?: object | string) {
+        super(message, details, true, CriticalException)
         this.name = 'CriticalException'
     }
 }
+
+export type ExceptionConstructor<T extends Exception = MinorException> = new (message?: string, details?: any) => T
 
 /**
  * Represents an acceptable problem that can be handled
@@ -49,8 +52,8 @@ export class CriticalException extends Exception {
  */
 export class MinorException extends Exception {
 
-    constructor(message?: string) {
-        super(message, false, MinorException)
+    constructor(message?: string, details?: object | string) {
+        super(message, details, false, MinorException)
         this.name = 'MinorException'
     }
 }
@@ -62,7 +65,7 @@ export class MinorException extends Exception {
 export class InvalidArgumentException extends Exception {
 
     constructor(argName: string, message?: string) {
-        super(`The argument "${argName}" is invalid! ${(message ? message : '')}`, false, InvalidArgumentException)
+        super(`The argument "${argName}" is invalid! ${(message ? message : '')}`, null, false, InvalidArgumentException)
         this.name = 'InvalidArgumentException'
     }
 }
@@ -73,7 +76,7 @@ export class InvalidArgumentException extends Exception {
 export class NotImplementedException extends Exception {
 
     constructor(message?: string) {
-        super(message, false, NotImplementedException)
+        super(message, null, false, NotImplementedException)
         this.name = 'NotImplementedException'
     }
 }
@@ -83,8 +86,9 @@ export class NotImplementedException extends Exception {
  */
 export class InternalErrorException extends Exception {
 
-    constructor(message?: string) {
-        super(message || 'An error occured on the 3rd-party side', false, InternalErrorException)
+    constructor(message?: string, details?: object | string) {
+        super(message || 'An error occured on the 3rd-party side', details, false, InternalErrorException)
         this.name = 'InternalErrorException'
+        this.details = details
     }
 }

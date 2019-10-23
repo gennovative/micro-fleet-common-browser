@@ -7,7 +7,9 @@ class JoiModelValidator {
     constructor(options) {
         this._defaultOpts = Object.assign({ abortEarly: false, allowUnknown: true, stripUnknown: true }, options.joiOptions);
         this._schemaMapId = options.schemaMapId;
+        Guard_1.Guard.assertIsTruthy(options.schemaMapModel || options.rawSchema, 'Either "schemaMapModel" or "rawSchema" option must be specified.');
         this._schemaMapModel = options.schemaMapModel;
+        this._rawSchema = options.rawSchema;
     }
     get schemaMapModel() {
         return this._schemaMapModel;
@@ -23,7 +25,7 @@ class JoiModelValidator {
             this._compileIdSchema();
         }
         const { error, value } = this._compiledId.validate(id);
-        return (error) ? [ValidationError_1.ValidationError.fromJoi(error.details), null] : [null, value];
+        return (error) ? [ValidationError_1.ValidationError.fromJoi(error), null] : [null, value];
     }
     /**
      * @see IModelValidator.whole
@@ -48,10 +50,10 @@ class JoiModelValidator {
         this._compiledId = joi.object(this._schemaMapId);
     }
     _compileWholeSchema() {
-        this._compiledWhole = joi.object(Object.assign(Object.assign({}, this._optionalize(this._schemaMapId)), this._schemaMapModel));
+        this._compiledWhole = this._rawSchema || joi.object(Object.assign(Object.assign({}, this._optionalize(this._schemaMapId)), this._schemaMapModel));
     }
     _compilePartialSchema() {
-        this._compiledPartial = joi.object(Object.assign(Object.assign({}, this._schemaMapId), this._optionalize(this._schemaMapModel)));
+        this._compiledPartial = this._rawSchema || joi.object(Object.assign(Object.assign({}, this._schemaMapId), this._optionalize(this._schemaMapModel)));
     }
     _optionalize(schemaMap) {
         const optionalMap = {};
@@ -67,7 +69,7 @@ class JoiModelValidator {
     _validate(schema, target, options = {}) {
         const opts = Object.assign(Object.assign({}, this._defaultOpts), options);
         const { error, value } = schema.validate(target, opts);
-        return (error) ? [ValidationError_1.ValidationError.fromJoi(error.details), null] : [null, value];
+        return (error) ? [ValidationError_1.ValidationError.fromJoi(error), null] : [null, value];
     }
 }
 exports.JoiModelValidator = JoiModelValidator;

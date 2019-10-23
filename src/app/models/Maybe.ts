@@ -1,15 +1,12 @@
 import { Exception } from './Exceptions'
 
 
-let _nothing: any
-
-
 /**
  * Represents an error when attempting to get value from a Maybe.Nothing
  */
 export class EmptyMaybeException extends Exception {
-    constructor() {
-        super('This Maybe has Nothing', false, EmptyMaybeException)
+    constructor(name: string) {
+        super(`This ${name} Maybe has Nothing`, null, false, EmptyMaybeException)
     }
 }
 
@@ -21,12 +18,21 @@ export class EmptyMaybeException extends Exception {
  */
 export abstract class Maybe<T = any> {
 
-    public static Nothing(): Maybe {
-        return _nothing
+    /**
+     * Creates an empty Maybe which throws `EmptyMaybeException` if attempting to get value.
+     * @param {string} name The debugging-friendly name to included in error message or `toString()` result.
+     */
+    public static Nothing(name: string = 'Nothing'): Maybe {
+        return new Nothing(name)
     }
 
-    public static Just<T>(value: T): Maybe<T> {
-        return new Just<T>(value)
+    /**
+     * Creates a Maybe wrapping a value.
+     * @param {T} value The value to be wrapped, it may be anything even `null` or `undefined`.
+     * @param {string} name The debugging-friendly name to included in error message or `toString()` result.
+     */
+    public static Just<T>(value: T, name: string = 'Just'): Maybe<T> {
+        return new Just<T>(value, name)
     }
 
     public static isJust(target: any): target is Just<any> {
@@ -34,7 +40,7 @@ export abstract class Maybe<T = any> {
     }
 
     public static isNothing(target: any): target is Nothing {
-        return (target === _nothing)
+        return (target instanceof Nothing)
     }
 
     public static isMaybe(target: any): target is Maybe {
@@ -98,6 +104,9 @@ export abstract class Maybe<T = any> {
      * @param defaultVal Value to return in case there is no contained value.
      */
     public abstract tryGetValue(defaultVal: any): T
+
+    constructor(protected $name: string) {
+    }
 }
 
 class Just<T> extends Maybe {
@@ -124,8 +133,8 @@ class Just<T> extends Maybe {
     }
 
 
-    constructor(private _value: T) {
-        super()
+    constructor(private _value: T, name: string) {
+        super(name)
         Object.freeze(this)
     }
 
@@ -171,7 +180,7 @@ class Just<T> extends Maybe {
      * @override
      */
     public toString() {
-        return `Maybe.Just(${this._value})`
+        return `Maybe.Just(${this._value}, ${this.$name})`
     }
 }
 
@@ -199,12 +208,12 @@ class Nothing extends Maybe {
      * @override
      */
     public get value(): any {
-        throw new EmptyMaybeException()
+        throw new EmptyMaybeException(this.$name)
     }
 
 
-    constructor() {
-        super()
+    constructor(name: string) {
+        super(name)
         Object.freeze(this)
     }
 
@@ -246,8 +255,6 @@ class Nothing extends Maybe {
      * @override
      */
     public toString() {
-        return `Maybe.Nothing()`
+        return `Maybe.Nothing(${this.$name})`
     }
 }
-
-_nothing = new Nothing

@@ -1,4 +1,5 @@
-declare module '@micro-fleet/common-browser/dist/app/models/Exceptions' {
+/// <reference path="./global.d.ts" />
+declare module '@micro-fleet/common-browser/models/Exceptions' {
     export class Exception implements Error {
         readonly message: string;
         readonly isCritical: boolean;
@@ -49,7 +50,7 @@ declare module '@micro-fleet/common-browser/dist/app/models/Exceptions' {
     }
 
 }
-declare module '@micro-fleet/common-browser/dist/app/Guard' {
+declare module '@micro-fleet/common-browser/Guard' {
     export class Guard {
         /**
          * Makes sure the specified `target` is not null or undefined.
@@ -121,9 +122,9 @@ declare module '@micro-fleet/common-browser/dist/app/Guard' {
     }
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/ValidationError' {
+declare module '@micro-fleet/common-browser/validators/ValidationError' {
     import * as joi from '@hapi/joi';
-    import { MinorException } from '@micro-fleet/common-browser/dist/app/models/Exceptions';
+    import { MinorException } from '@micro-fleet/common-browser/models/Exceptions';
     /**
      * Represents a validation error for a property.
      * UI Form should use this information to highlight the particular input.
@@ -152,9 +153,9 @@ declare module '@micro-fleet/common-browser/dist/app/validators/ValidationError'
     }
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator' {
+declare module '@micro-fleet/common-browser/validators/JoiModelValidator' {
     import * as joi from '@hapi/joi';
-    import { ValidationError } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
+    import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
     export interface ValidationOptions extends joi.ValidationOptions {
     }
     export type JoiModelValidatorConstructorOptions = {
@@ -217,9 +218,9 @@ declare module '@micro-fleet/common-browser/dist/app/validators/JoiModelValidato
                                             }
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/validate-internal' {
+declare module '@micro-fleet/common-browser/validators/validate-internal' {
     import * as joi from '@hapi/joi';
-    import { JoiModelValidator, JoiModelValidatorConstructorOptions } from '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator';
+    import { JoiModelValidator, JoiModelValidatorConstructorOptions } from '@micro-fleet/common-browser/validators/JoiModelValidator';
     export type PropValidationMetadata = {
         type?(): joi.AnySchema;
         rules?: Array<(prev: joi.AnySchema) => joi.AnySchema>;
@@ -239,9 +240,9 @@ declare module '@micro-fleet/common-browser/dist/app/validators/validate-interna
     export function createJoiValidator<T>(Class: Function): JoiModelValidator<T>;
 
 }
-declare module '@micro-fleet/common-browser/dist/app/models/Translatable' {
-    import { IModelValidator } from '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator';
-    import { ValidationError } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
+declare module '@micro-fleet/common-browser/models/Translatable' {
+    import { IModelValidator } from '@micro-fleet/common-browser/validators/JoiModelValidator';
+    import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
     export interface ITranslatable<T = any> {
         getValidator(): IModelValidator<T>;
         from(source: object): T;
@@ -260,7 +261,7 @@ declare module '@micro-fleet/common-browser/dist/app/models/Translatable' {
     export {};
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/JoiExtended' {
+declare module '@micro-fleet/common-browser/validators/JoiExtended' {
     import * as joi from '@hapi/joi';
     export type JoiDateStringOptions = {
         /**
@@ -300,9 +301,9 @@ declare module '@micro-fleet/common-browser/dist/app/validators/JoiExtended' {
     export const extJoi: ExtendedJoi;
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/validate-decorator' {
+declare module '@micro-fleet/common-browser/validators/validate-decorator' {
     import * as joi from '@hapi/joi';
-    import { JoiModelValidatorConstructorOptions } from '@micro-fleet/common-browser/dist/app/validators/JoiModelValidator';
+    import { JoiModelValidatorConstructorOptions } from '@micro-fleet/common-browser/validators/JoiModelValidator';
     export type ArrayDecoratorOptions = {
         /**
          * Whether or not to allow specifying a value and
@@ -580,10 +581,10 @@ declare module '@micro-fleet/common-browser/dist/app/validators/validate-decorat
     export function validateProp(schema: joi.SchemaLike): PropertyDecorator;
 
 }
-declare module '@micro-fleet/common-browser/dist/app/decorators' {
-    import { translatable } from '@micro-fleet/common-browser/dist/app/models/Translatable';
-    import * as v from '@micro-fleet/common-browser/dist/app/validators/validate-decorator';
-    export { ArrayDecoratorOptions, BooleanDecoratorOptions, BigIntDecoratorOptions, NumberDecoratorOptions, DateTimeDecoratorOptions, StringDecoratorOptions, } from '@micro-fleet/common-browser/dist/app/validators/validate-decorator';
+declare module '@micro-fleet/common-browser/decorators' {
+    import { translatable } from '@micro-fleet/common-browser/models/Translatable';
+    import * as v from '@micro-fleet/common-browser/validators/validate-decorator';
+    export { ArrayDecoratorOptions, BooleanDecoratorOptions, BigIntDecoratorOptions, NumberDecoratorOptions, DateTimeDecoratorOptions, StringDecoratorOptions, } from '@micro-fleet/common-browser/validators/validate-decorator';
     export type Decorators = {
         /**
          * Used to decorate model class' properties to assert it must be a boolean.
@@ -758,7 +759,7 @@ declare module '@micro-fleet/common-browser/dist/app/decorators' {
     export const decorators: Decorators;
 
 }
-declare module '@micro-fleet/common-browser/dist/app/interfaces/automapper' {
+declare module '@micro-fleet/common-browser/interfaces/automapper' {
     /**
      * Interface for returning an object with available 'sub' functions
      * to enable method chaining (e.g. automapper.createMap().forMember().forMember() ...)
@@ -878,8 +879,8 @@ declare module '@micro-fleet/common-browser/dist/app/interfaces/automapper' {
     export type IMapCallback = (result: any) => void;
 
 }
-declare module '@micro-fleet/common-browser/dist/app/models/Maybe' {
-    import { Exception } from '@micro-fleet/common-browser/dist/app/models/Exceptions';
+declare module '@micro-fleet/common-browser/models/Maybe' {
+    import { Exception } from '@micro-fleet/common-browser/models/Exceptions';
     /**
      * Represents an error when attempting to get value from a Maybe.Nothing
      */
@@ -1028,7 +1029,7 @@ declare module '@micro-fleet/common-browser/dist/app/models/Maybe' {
     export {};
 
 }
-declare module '@micro-fleet/common-browser/dist/app/models/PagedData' {
+declare module '@micro-fleet/common-browser/models/PagedData' {
     /**
      * An object that contains paged array of items.
      */
@@ -1059,8 +1060,8 @@ declare module '@micro-fleet/common-browser/dist/app/models/PagedData' {
     }
 
 }
-declare module '@micro-fleet/common-browser/dist/app/models/Result' {
-    import { Exception } from '@micro-fleet/common-browser/dist/app/models/Exceptions'; type Newable<T = any> = (new (...args: any[]) => T); function returnThis(this: any): any;
+declare module '@micro-fleet/common-browser/models/Result' {
+    import { Exception } from '@micro-fleet/common-browser/models/Exceptions'; type Newable<T = any> = (new (...args: any[]) => T); function returnThis(this: any): any;
     /**
      * Represents an error when attempting to get value from a Result.Failure
      */
@@ -1239,8 +1240,8 @@ declare module '@micro-fleet/common-browser/dist/app/models/Result' {
     export {};
 
 }
-declare module '@micro-fleet/common-browser/dist/app/validators/BusinessInvariantError' {
-    import { ValidationError, ValidationErrorItem } from '@micro-fleet/common-browser/dist/app/validators/ValidationError';
+declare module '@micro-fleet/common-browser/validators/BusinessInvariantError' {
+    import { ValidationError, ValidationErrorItem } from '@micro-fleet/common-browser/validators/ValidationError';
     /**
      * Represents a business rule violation.
      */

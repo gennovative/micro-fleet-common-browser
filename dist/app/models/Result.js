@@ -8,8 +8,8 @@ function returnThis() {
  * Represents an error when attempting to get value from a Result.Failure
  */
 class NoValueFromFailureResultException extends Exceptions_1.Exception {
-    constructor() {
-        super('Failure Result has no value', false, NoValueFromFailureResultException);
+    constructor(name) {
+        super(`${name} Result has no value`, null, false, NoValueFromFailureResultException);
     }
 }
 exports.NoValueFromFailureResultException = NoValueFromFailureResultException;
@@ -17,8 +17,8 @@ exports.NoValueFromFailureResultException = NoValueFromFailureResultException;
  * Represents an error when attempting to get error from a Result.Ok
  */
 class NoErrorFromOkResultException extends Exceptions_1.Exception {
-    constructor() {
-        super('Ok Result has no error', false, NoErrorFromOkResultException);
+    constructor(name) {
+        super(`${name} Result has no error`, null, false, NoErrorFromOkResultException);
     }
 }
 exports.NoErrorFromOkResultException = NoErrorFromOkResultException;
@@ -28,17 +28,18 @@ exports.NoErrorFromOkResultException = NoErrorFromOkResultException;
  * Source code inspired by: https://github.com/ramda/ramda-fantasy/blob/master/src/Either.js
  */
 class Result {
-    constructor() {
+    constructor($name) {
+        this.$name = $name;
         /**
          * Alias of Result.Ok
          */
         this.of = Result.Ok;
     }
-    static Failure(reason) {
-        return new Failure(reason);
+    static Failure(reason, name = 'Failure') {
+        return new Failure(reason, name);
     }
-    static Ok(value) {
-        return new Ok(value);
+    static Ok(value, name = 'Ok') {
+        return new Ok(value, name);
     }
     static isOk(target) {
         return (target instanceof Ok);
@@ -56,8 +57,8 @@ exports.Result = Result;
  */
 Result.of = Result.Ok;
 class Ok extends Result {
-    constructor(_value) {
-        super();
+    constructor(_value, name) {
+        super(name);
         this._value = _value;
         /**
          * @override
@@ -85,7 +86,7 @@ class Ok extends Result {
      * @override
      */
     get error() {
-        throw new NoErrorFromOkResultException();
+        throw new NoErrorFromOkResultException(this.$name);
     }
     /**
      * @override
@@ -120,19 +121,19 @@ class Ok extends Result {
     /**
      * @override
      */
-    throwError(ExceptionClass) {
+    throwErrorIfAny(ExceptionClass, message) {
         return;
     }
     /**
      * @override
      */
     toString() {
-        return `Result.Ok: ${this._value}`;
+        return `Result.Ok(${this._value}, ${this.$name})`;
     }
 }
 class Failure extends Result {
-    constructor(_reason) {
-        super();
+    constructor(_reason, name) {
+        super(name);
         this._reason = _reason;
         /**
          * @override
@@ -170,7 +171,7 @@ class Failure extends Result {
      * @override
      */
     get value() {
-        throw new NoValueFromFailureResultException();
+        throw new NoValueFromFailureResultException(this.$name);
     }
     /**
      * @override
@@ -190,9 +191,9 @@ class Failure extends Result {
     /**
      * @override
      */
-    throwError(ExceptionClass) {
+    throwErrorIfAny(ExceptionClass, message = 'An error is thrown from Failure Result') {
         if (ExceptionClass) {
-            throw new ExceptionClass(this._reason);
+            throw new ExceptionClass(`Thrown by Result.Failure${this.$name}: ${message}`, this._reason);
         }
         throw this._reason;
     }
@@ -200,7 +201,7 @@ class Failure extends Result {
      * @override
      */
     toString() {
-        return `Result.Failure: ${this._reason}`;
+        return `Result.Failure(${this._reason}, ${this.$name})`;
     }
 }
 //# sourceMappingURL=Result.js.map

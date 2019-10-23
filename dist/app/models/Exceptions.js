@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// tslint:disable-next-line:no-magic-numbers
 Error.stackTraceLimit = 20;
 class Exception {
     /**
@@ -8,8 +9,9 @@ class Exception {
      * @param isCritical
      * @param exceptionClass {class} The exception class to exclude from stacktrace.
      */
-    constructor(message = '', isCritical = true, exceptionClass) {
+    constructor(message = '', details, isCritical = true, exceptionClass) {
         this.message = message;
+        this.details = details;
         this.isCritical = isCritical;
         Error.captureStackTrace(this, exceptionClass || Exception);
     }
@@ -28,8 +30,8 @@ exports.Exception = Exception;
  * and need restarting.
  */
 class CriticalException extends Exception {
-    constructor(message) {
-        super(message, true, CriticalException);
+    constructor(message, details) {
+        super(message, details, true, CriticalException);
         this.name = 'CriticalException';
     }
 }
@@ -39,8 +41,8 @@ exports.CriticalException = CriticalException;
  * and the system does not need restarting.
  */
 class MinorException extends Exception {
-    constructor(message) {
-        super(message, false, MinorException);
+    constructor(message, details) {
+        super(message, details, false, MinorException);
         this.name = 'MinorException';
     }
 }
@@ -51,7 +53,7 @@ exports.MinorException = MinorException;
  */
 class InvalidArgumentException extends Exception {
     constructor(argName, message) {
-        super(`The argument "${argName}" is invalid! ${(message ? message : '')}`, false, InvalidArgumentException);
+        super(`The argument "${argName}" is invalid! ${(message ? message : '')}`, null, false, InvalidArgumentException);
         this.name = 'InvalidArgumentException';
     }
 }
@@ -61,7 +63,7 @@ exports.InvalidArgumentException = InvalidArgumentException;
  */
 class NotImplementedException extends Exception {
     constructor(message) {
-        super(message, false, NotImplementedException);
+        super(message, null, false, NotImplementedException);
         this.name = 'NotImplementedException';
     }
 }
@@ -70,9 +72,10 @@ exports.NotImplementedException = NotImplementedException;
  * Represents an error whose origin is from another system.
  */
 class InternalErrorException extends Exception {
-    constructor(message) {
-        super(message || 'An error occured on the 3rd-party side', false, InternalErrorException);
+    constructor(message, details) {
+        super(message || 'An error occured on the 3rd-party side', details, false, InternalErrorException);
         this.name = 'InternalErrorException';
+        this.details = details;
     }
 }
 exports.InternalErrorException = InternalErrorException;
