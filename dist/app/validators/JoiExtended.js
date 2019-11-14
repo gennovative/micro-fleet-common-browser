@@ -48,10 +48,10 @@ const dateStringRule = {
         params.options = params.options || { isUTC: false };
     },
     validate(params, value, state, validationOpts) {
-        // Eg: 2019-05-15T02:06:02Z or 2019-05-15
-        const UTC_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}Z)?$/;
-        // Eg: 2019-05-15T09:06:02+07:00 or 2019-05-15
-        const TIMEZONE_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}[\+\-]\d{2}:\d{2})?$/;
+        // Eg: 2019-05-15T02:06:02.000Z or 2019-05-15T02:06:02Z or 2019-05-15
+        const UTC_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z)?$/;
+        // Eg: 2019-05-15T09:06:02.000+07:00 or 2019-05-15T09:06:02+07:00 or 2019-05-15
+        const TIMEZONE_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?[\+\-]\d{2}:\d{2})?$/;
         const ruleOpts = params.options;
         const regex = ruleOpts.isUTC ? UTC_DATE : TIMEZONE_DATE;
         const isMatch = typeof value === 'string'
@@ -60,7 +60,7 @@ const dateStringRule = {
         if (!isMatch) {
             return this.createError('genn.dateStringWrongFormat', {
                 value,
-                format: ruleOpts.isUTC ? 'YYYY-MM-DDThh:mm:ssZ' : 'YYYY-MM-DDThh:mm+hh:mm or -hh:mm',
+                format: ruleOpts.isUTC ? 'YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.sZ' : 'YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.s+hh:mm or -hh:mm',
             }, state, validationOpts);
         }
         else if (new Date(value).toString() === 'Invalid Date') {

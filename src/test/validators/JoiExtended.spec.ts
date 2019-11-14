@@ -263,7 +263,7 @@ describe('JoiExtended', () => {
             // Assert
             expect(errorOne).to.to.exist
             expect(errorOne.message).to.equal('"value" needs to be a date string compliant' +
-                ' with W3C Date and Time Formats (YYYY-MM-DDThh:mm+hh:mm or -hh:mm)')
+                ' with W3C Date and Time Formats (YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.s+hh:mm or -hh:mm)')
 
             expect(errorTwo).to.to.exist
             expect(errorTwo.message).to.equal('"value" needs all components to have valid values')
@@ -281,7 +281,7 @@ describe('JoiExtended', () => {
 
             // Assert
             const ERR_MSG = '"value" needs to be a date string compliant' +
-                ' with W3C Date and Time Formats (YYYY-MM-DDThh:mm:ssZ)'
+                ' with W3C Date and Time Formats (YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.sZ)'
             expect(errorOne).to.to.exist
             expect(errorOne.message).to.equal(ERR_MSG)
 

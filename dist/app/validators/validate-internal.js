@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const joi = require("@hapi/joi");
+const cloneDeep = require("lodash.clonedeep");
 const JoiModelValidator_1 = require("./JoiModelValidator");
 const VALIDATE_META = Symbol();
 function createClassValidationMetadata() {
@@ -12,15 +13,22 @@ function createClassValidationMetadata() {
     };
 }
 function getClassValidationMetadata(Class) {
-    return Class[VALIDATE_META] || createClassValidationMetadata();
+    let proto = Class.prototype;
+    do {
+        if (proto.hasOwnProperty(VALIDATE_META)) {
+            return cloneDeep(proto[VALIDATE_META]);
+        }
+        proto = Object.getPrototypeOf(proto);
+    } while (proto != Object.prototype);
+    return createClassValidationMetadata();
 }
 exports.getClassValidationMetadata = getClassValidationMetadata;
 function setClassValidationMetadata(Class, meta) {
-    Class[VALIDATE_META] = meta;
+    Class.prototype[VALIDATE_META] = meta;
 }
 exports.setClassValidationMetadata = setClassValidationMetadata;
 function deleteClassValidationMetadata(Class) {
-    delete Class[VALIDATE_META];
+    delete Class.prototype[VALIDATE_META];
 }
 exports.deleteClassValidationMetadata = deleteClassValidationMetadata;
 function getPropValidationMetadata(Class, propName) {

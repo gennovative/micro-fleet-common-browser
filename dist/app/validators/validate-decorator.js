@@ -120,14 +120,13 @@ exports.number = number;
  * }
  * ```
  */
-function datetime(_a = { convert: false }) {
-    var { isUTC, translator } = _a, opts = __rest(_a, ["isUTC", "translator"]);
+function datetime({ isUTC, translator, convert = false } = {}) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
         const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
         propMeta.type = () => JoiExtended_1.extJoi.genn()
             .dateString({ isUTC, translator })
-            .options(opts);
+            .options({ convert });
         v.setPropValidationMetadata(proto.constructor, propName, propMeta);
     };
 }

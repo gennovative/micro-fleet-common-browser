@@ -1,4 +1,5 @@
 import * as joi from '@hapi/joi'
+import cloneDeep = require('lodash.clonedeep')
 
 import { JoiModelValidator, JoiModelValidatorConstructorOptions } from './JoiModelValidator'
 
@@ -30,17 +31,25 @@ function createClassValidationMetadata(): ClassValidationMetadata {
 }
 
 export function getClassValidationMetadata(Class: Function): ClassValidationMetadata {
-    return Class[VALIDATE_META] || createClassValidationMetadata()
+    let proto = Class.prototype
+    do {
+        if (proto.hasOwnProperty(VALIDATE_META)) {
+            return cloneDeep(proto[VALIDATE_META])
+        }
+        proto = Object.getPrototypeOf(proto)
+    } while (proto != Object.prototype)
+
+    return createClassValidationMetadata()
 }
 
 
 export function setClassValidationMetadata(Class: Function, meta: ClassValidationMetadata): void {
-    Class[VALIDATE_META] = meta
+    Class.prototype[VALIDATE_META] = meta
 }
 
 
 export function deleteClassValidationMetadata(Class: Function): void {
-    delete Class[VALIDATE_META]
+    delete Class.prototype[VALIDATE_META]
 }
 
 

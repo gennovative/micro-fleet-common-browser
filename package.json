@@ -14,14 +14,15 @@
         "watch": "npm run clean && npm run lint && tsc --watch --pretty"
     },
     "dependencies": {
-        "@hapi/joi": "~15.1"
+        "@hapi/joi": "~15.1",
+        "lodash.clonedeep": "^4.5.0"
     },
     "devDependencies": {
         "@types/chai": "~4.2",
         "@types/chai-spies": "~1.0",
         "@types/debug": "~4.1",
         "@types/hapi__joi": "~15.0",
-        "@types/lodash": "~4.14",
+        "@types/lodash.clonedeep": "~4.5",
         "@types/mocha": "~5.2",
         "chai": "~4.2",
         "chai-spies": "~1.0",
@@ -30,7 +31,6 @@
         "moment": "~2.24",
         "nyc": "~14.1",
         "rimraf": "~3.0",
-        "ts-generator": "0.0.8",
         "tslint": "~5.19",
         "typescript": "~3.6"
     },
