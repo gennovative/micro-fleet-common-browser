@@ -1,15 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const joi = require("@hapi/joi");
-/**
- * Rule to validate native bigint type.
- */
-const bigintRule = {
-    name: 'bigint',
-    setup(params) {
-        this['_flags'].bigint = true; // Set a flag for later use
+const extBigint = {
+    type: 'bigint',
+    messages: {
+        'bigint.convert': '"{{#label}}": {{#value}} cannot be converted to BigInt',
+        'bigint.native': '"{{#label}}" must be of BigInt type or a string that is convertible to BigInt',
     },
-    validate(params, value, state, options) {
+    /**
+     * Only called when prefs.convert is true
+     */
+    coerce(value, helpers) {
+        if (helpers.schema.$_getFlag('asString')) {
+            return {
+                value: String(value),
+            };
+        }
+        else if (helpers.schema.$_getFlag('asNative')) {
+            try {
+                return {
+                    value: BigInt(value),
+                };
+            }
+            catch (_a) {
+                return {
+                    errors: [
+                        helpers.error('bigint.convert', { value }),
+                    ],
+                };
+            }
+        }
+        return {
+            value,
+        };
+    },
+    validate(value, helpers) {
         let isBigInt = true;
         try {
             // '987654321' => valid
@@ -23,99 +48,78 @@ const bigintRule = {
             isBigInt = false;
         }
         return isBigInt
-            // Everything is OK
-            ? value
-            // Generate an error, state and options need to be passed
-            : this.createError('genn.bigint', { v: value }, state, options);
+            ? { value } // Everything is OK
+            : { errors: [helpers.error('bigint.native')] };
+    },
+    rules: {
+        asString: {
+            method() {
+                return this.$_setFlag('asString', true);
+            },
+        },
+        asNative: {
+            method() {
+                return this.$_setFlag('asNative', true);
+            },
+        },
+    },
+};
+const extDateString = {
+    type: 'dateString',
+    messages: {
+        'dateString.wrongFormat': '"{{#label}}" must be a date string compliant with W3C Date and Time Formats ({{#format}})',
+        'dateString.invalidValue': '"{{#label}}" must have all components with valid values',
+    },
+    validate(value, helpers) {
+        // Eg: 2019-05-15T02:06:02.034Z or 2019-05-15T02:06:02Z or 2019-05-15
+        const UTC_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z)?$/;
+        // Eg: 2019-05-15T09:06:02.034+07:00 or 2019-05-15T09:06:02+07:00 or 2019-05-15
+        const TIMEZONE_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?[\+\-]\d{2}:\d{2})?$/;
+        const { schema } = helpers;
+        const isUTC = schema.$_getFlag('isUTC');
+        const regex = isUTC ? UTC_DATE : TIMEZONE_DATE;
+        const isMatch = typeof value === 'string'
+            ? (value.match(regex) != null)
+            : false;
+        let errors;
+        if (!isMatch) {
+            errors = helpers.error('dateString.wrongFormat', {
+                value,
+                format: isUTC ? 'YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.sZ' : 'YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.s+hh:mm or -hh:mm',
+            });
+            return { errors };
+        }
+        else if (new Date(value).toString() === 'Invalid Date') {
+            errors = helpers.error('dateString.invalidValue');
+            return { errors };
+        }
+        return { value };
+    },
+    rules: {
+        isUTC: {
+            method() {
+                return this.$_setFlag('isUTC', true);
+            },
+        },
+        translate: {
+            method(fn) {
+                return this.$_addRule({
+                    name: 'translate',
+                    args: { translate: fn },
+                });
+            },
+            validate(value, helpers, args, options) {
+                const translate = args.translate || toDate;
+                return translate(value);
+            },
+        },
     },
 };
 function toDate(dateString) {
     return new Date(dateString);
 }
 /**
- * Rule to validate W3C Date and Time format for web.
- */
-const dateStringRule = {
-    name: 'dateString',
-    params: {
-        options: joi.object({
-            isUTC: joi.boolean().default(false),
-            translator: joi.any(),
-        }).optional(),
-    },
-    setup(params) {
-        this['_flags'].dateString = true;
-        params.options = params.options || { isUTC: false };
-    },
-    validate(params, value, state, validationOpts) {
-        // Eg: 2019-05-15T02:06:02.000Z or 2019-05-15T02:06:02Z or 2019-05-15
-        const UTC_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z)?$/;
-        // Eg: 2019-05-15T09:06:02.000+07:00 or 2019-05-15T09:06:02+07:00 or 2019-05-15
-        const TIMEZONE_DATE = /^\d{4}\-\d{2}\-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?[\+\-]\d{2}:\d{2})?$/;
-        const ruleOpts = params.options;
-        const regex = ruleOpts.isUTC ? UTC_DATE : TIMEZONE_DATE;
-        const isMatch = typeof value === 'string'
-            ? (value.match(regex) != null)
-            : false;
-        if (!isMatch) {
-            return this.createError('genn.dateStringWrongFormat', {
-                value,
-                format: ruleOpts.isUTC ? 'YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.sZ' : 'YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.s+hh:mm or -hh:mm',
-            }, state, validationOpts);
-        }
-        else if (new Date(value).toString() === 'Invalid Date') {
-            return this.createError('genn.dateStringInvalidValue', {
-                value,
-            }, state, validationOpts);
-        }
-        // Everything is OK
-        if (validationOpts.convert) {
-            const translator = ruleOpts.translator || toDate;
-            return translator(value);
-        }
-        return value;
-    },
-};
-// Working flow:
-// rule.setup => extension.pre => rule.validate => extension.coerce
-const joiExtensions = {
-    name: 'genn',
-    language: {
-        /**
-         * Validate against native bigint type
-         */
-        bigint: 'needs to be a bigint',
-        /**
-         * Validate against W3C Date and Time Formats.
-         * See: https://www.w3.org/TR/NOTE-datetime
-         */
-        dateStringWrongFormat: 'needs to be a date string compliant with W3C Date and Time Formats ({{format}})',
-        dateStringInvalidValue: 'needs all components to have valid values',
-    },
-    pre(value, state, options) {
-        // tslint:disable-next-line:no-invalid-this
-        const flags = this['_flags'];
-        if (flags.bigint === true) {
-            try {
-                return (options.convert ? BigInt(value) : value);
-            }
-            catch (_a) {
-                return value;
-            }
-        }
-        return value; // Keep the value as it was
-    },
-    // coerce(value: any, state: joi.State, options: joi.ValidationOptions) {
-    //     const flags: GennFlag = this['_flags']
-    //     if (flags.dateString === true) {
-    //         return flags.dateStringTranslator(value)
-    //     }
-    //     return value // Keep the value as it was
-    // },
-    rules: [bigintRule, dateStringRule],
-};
-/**
  * Joi instance with "genn()" extension enabled, including some custom rules.
  */
-exports.extJoi = joi.extend(joiExtensions);
+exports.extJoi = joi.extend(extBigint, extDateString);
 //# sourceMappingURL=JoiExtended.js.map

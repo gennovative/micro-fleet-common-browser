@@ -12,6 +12,7 @@ function createClassValidationMetadata() {
         idProps: new Set(),
     };
 }
+exports.createClassValidationMetadata = createClassValidationMetadata;
 function getClassValidationMetadata(Class) {
     let proto = Class.prototype;
     do {
@@ -19,7 +20,7 @@ function getClassValidationMetadata(Class) {
             return cloneDeep(proto[VALIDATE_META]);
         }
         proto = Object.getPrototypeOf(proto);
-    } while (proto != Object.prototype);
+    } while (!Object.is(proto, Object.prototype));
     return createClassValidationMetadata();
 }
 exports.getClassValidationMetadata = getClassValidationMetadata;
@@ -31,16 +32,25 @@ function deleteClassValidationMetadata(Class) {
     delete Class.prototype[VALIDATE_META];
 }
 exports.deleteClassValidationMetadata = deleteClassValidationMetadata;
-function getPropValidationMetadata(Class, propName) {
-    return getClassValidationMetadata(Class).props[propName] || {
+// export function getPropValidationMetadata(Class: Function, propName: string | symbol): PropValidationMetadata {
+//     return getClassValidationMetadata(Class).props[propName as string] || {
+//         type: () => joi.string(),
+//         rules: [],
+//     }
+// }
+/**
+ * @param classMeta Must be passed to avoid calling costly function `getClassValidationMetadata`
+ */
+function extractPropValidationMetadata(classMeta, propName) {
+    return classMeta.props[propName] || {
         type: () => joi.string(),
         rules: [],
     };
 }
-exports.getPropValidationMetadata = getPropValidationMetadata;
-function setPropValidationMetadata(Class, propName, meta) {
-    const classMeta = getClassValidationMetadata(Class);
-    classMeta.props[propName] = meta;
+exports.extractPropValidationMetadata = extractPropValidationMetadata;
+function setPropValidationMetadata(Class, classMeta, propName, propMeta) {
+    classMeta = classMeta || getClassValidationMetadata(Class);
+    classMeta.props[propName] = propMeta;
     setClassValidationMetadata(Class, classMeta);
 }
 exports.setPropValidationMetadata = setPropValidationMetadata;

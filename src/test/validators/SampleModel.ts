@@ -22,7 +22,7 @@ function createValidator(): void {
             address: joi.string().required(),
             age: joi.number().min(15).max(99).integer()
                 .allow(null).optional(),
-            gender: joi.only('male', 'female').allow(null).optional(),
+            gender: joi.valid('male', 'female').allow(null).optional(),
         },
         schemaMapId: {
             theID: joi.number().min(1).max(Number.MAX_SAFE_INTEGER).required(),

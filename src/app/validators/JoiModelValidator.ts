@@ -117,7 +117,7 @@ export class JoiModelValidator<T>
         if (!this._compiledId) {
             this._compileIdSchema()
         }
-        const { error, value } = this._compiledId.validate<any>(id)
+        const { error, value } = this._compiledId.validate(id)
         return (error) ? [ ValidationError.fromJoi(error), null] : [null, value]
     }
 
@@ -181,7 +181,7 @@ export class JoiModelValidator<T>
             ...options,
         }
 
-        const { error, value } = schema.validate<T>(target, opts)
+        const { error, value } = schema.validate(target, opts)
 
         return (error) ? [ ValidationError.fromJoi(error), null] : [null, value]
     }

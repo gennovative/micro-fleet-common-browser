@@ -27,7 +27,7 @@ const JoiExtended_1 = require("./JoiExtended");
  *
  * class ModelA {
  *   @array({
- *     items: joi.string().only(ALLOWED).required()
+ *     items: joi.string().valid(ALLOWED).required()
  *   })
  *   fields: string[]
  * }
@@ -44,7 +44,8 @@ const JoiExtended_1 = require("./JoiExtended");
 function array(opts) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
         propMeta.type = () => {
             const itemRules = Array.isArray(opts.items) ? opts.items : [opts.items];
             return joi.array().items(itemRules);
@@ -53,7 +54,7 @@ function array(opts) {
         (opts.maxLength != null) && propMeta.rules.push(prev => prev.max(opts.maxLength));
         const allowSingle = (opts.allowSingle == null) ? true : opts.allowSingle;
         allowSingle && propMeta.rules.push(prev => prev.single().options({ convert: true }));
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.array = array;
@@ -63,9 +64,10 @@ exports.array = array;
 function boolean(opts = {}) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
         propMeta.type = () => joi.boolean().options(opts);
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.boolean = boolean;
@@ -75,9 +77,14 @@ exports.boolean = boolean;
 function bigInt({ convert } = { convert: false }) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
-        propMeta.type = () => JoiExtended_1.extJoi.genn().bigint().options({ convert });
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
+        propMeta.type = () => {
+            const schema = JoiExtended_1.extJoi.bigint();
+            convert && schema.asNative();
+            return schema;
+        };
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.bigInt = bigInt;
@@ -88,11 +95,12 @@ function number(_a = {}) {
     var { min, max } = _a, opts = __rest(_a, ["min", "max"]);
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
         propMeta.type = () => joi.number().options(opts);
         (min != null) && propMeta.rules.push(prev => prev.min(min));
         (max != null) && propMeta.rules.push(prev => prev.max(max));
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.number = number;
@@ -123,11 +131,15 @@ exports.number = number;
 function datetime({ isUTC, translator, convert = false } = {}) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
-        propMeta.type = () => JoiExtended_1.extJoi.genn()
-            .dateString({ isUTC, translator })
-            .options({ convert });
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
+        propMeta.type = () => {
+            const schema = JoiExtended_1.extJoi.dateString();
+            isUTC && schema.isUTC();
+            convert && schema.translate(translator);
+            return schema;
+        };
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.datetime = datetime;
@@ -138,9 +150,10 @@ exports.datetime = datetime;
 function defaultAs(value) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
         propMeta.rules.push(prev => prev.default(value));
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.defaultAs = defaultAs;
@@ -162,14 +175,15 @@ exports.defaultAs = defaultAs;
 function only(...values) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
         // Passing array might be a mistake causing array in array [[value]]
         // We should correct it back to spreaded list of params
         if (values.length == 1 && Array.isArray(values[0])) {
             values = [...values[0]];
         }
-        propMeta.rules.push(prev => prev.only(values));
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        propMeta.rules.push(prev => prev.valid(...values));
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.only = only;
@@ -180,10 +194,11 @@ exports.only = only;
 function required(allowNull = false) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
         propMeta.rules.push(prev => prev.required());
         allowNull && propMeta.rules.push(prev => prev.allow(null));
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.required = required;
@@ -230,7 +245,8 @@ exports.id = id;
 function string(opts = { allowEmpty: true }) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
         propMeta.type = () => {
             const schema = joi.string();
             return opts.allowEmpty
@@ -248,7 +264,7 @@ function string(opts = { allowEmpty: true }) {
             }
             return prev.uri();
         });
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.string = string;
@@ -269,19 +285,16 @@ function copyStatic(SrcClass, DestClass, props = []) {
     });
 }
 /**
- * Used to decorate model class to declare validation rules.
- *
- * If `validatorOptions.schemaMapModel` is specified, it overrides all properties' decorators
- * such as @validateProp(), @number(), @defaultAs()...
- *
- * If `validatorOptions.schemaMapId` is specified, it overrides the @id() decorator.
+ * Used to decorate model class to __exclusively__ declare validation rules,
+ * which means it __removes__ all rules and options from property decorator
+ * as well as parent classes, then applies the specified `validatorOptions`.
  *
  * @param {JoiModelValidatorConstructorOptions} validatorOptions The options for creating `JoiModelValidator` instance.
  */
 function validateClass(validatorOptions) {
     return function (TargetClass) {
         Guard_1.Guard.assertArgDefined('validatorOptions', validatorOptions);
-        const classMeta = Object.assign(v.getClassValidationMetadata(TargetClass), validatorOptions);
+        const classMeta = Object.assign(v.createClassValidationMetadata(), validatorOptions);
         v.setClassValidationMetadata(TargetClass, classMeta);
     };
 }
@@ -321,9 +334,10 @@ function validateProp(schema) {
     return function (proto, propName) {
         Guard_1.Guard.assertIsTruthy(propName, 'This decorator is for properties inside class');
         Guard_1.Guard.assertArgDefined('schema', schema);
-        const propMeta = v.getPropValidationMetadata(proto.constructor, propName);
+        const classMeta = v.getClassValidationMetadata(proto.constructor);
+        const propMeta = v.extractPropValidationMetadata(classMeta, propName);
         propMeta.rawSchema = schema;
-        v.setPropValidationMetadata(proto.constructor, propName, propMeta);
+        v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta);
     };
 }
 exports.validateProp = validateProp;

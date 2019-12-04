@@ -21,7 +21,7 @@ export type ClassValidationMetadata = JoiModelValidatorConstructorOptions & {
 
 const VALIDATE_META = Symbol()
 
-function createClassValidationMetadata(): ClassValidationMetadata {
+export function createClassValidationMetadata(): ClassValidationMetadata {
     return {
         schemaMapId: {},
         schemaMapModel: {},
@@ -37,7 +37,7 @@ export function getClassValidationMetadata(Class: Function): ClassValidationMeta
             return cloneDeep(proto[VALIDATE_META])
         }
         proto = Object.getPrototypeOf(proto)
-    } while (proto != Object.prototype)
+    } while (!Object.is(proto, Object.prototype))
 
     return createClassValidationMetadata()
 }
@@ -53,16 +53,29 @@ export function deleteClassValidationMetadata(Class: Function): void {
 }
 
 
-export function getPropValidationMetadata(Class: Function, propName: string | symbol): PropValidationMetadata {
-    return getClassValidationMetadata(Class).props[propName as string] || {
+// export function getPropValidationMetadata(Class: Function, propName: string | symbol): PropValidationMetadata {
+//     return getClassValidationMetadata(Class).props[propName as string] || {
+//         type: () => joi.string(),
+//         rules: [],
+//     }
+// }
+
+/**
+ * @param classMeta Must be passed to avoid calling costly function `getClassValidationMetadata`
+ */
+export function extractPropValidationMetadata(classMeta: ClassValidationMetadata, propName: string | symbol): PropValidationMetadata {
+    return classMeta.props[propName as string] || {
         type: () => joi.string(),
         rules: [],
     }
 }
 
-export function setPropValidationMetadata(Class: Function, propName: string | symbol, meta: PropValidationMetadata): void {
-    const classMeta = getClassValidationMetadata(Class)
-    classMeta.props[propName as string] = meta
+export function setPropValidationMetadata(
+    Class: Function, classMeta: ClassValidationMetadata,
+    propName: string | symbol, propMeta: PropValidationMetadata,
+): void {
+    classMeta = classMeta || getClassValidationMetadata(Class)
+    classMeta.props[propName as string] = propMeta
     setClassValidationMetadata(Class, classMeta)
 }
 

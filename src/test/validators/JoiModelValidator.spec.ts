@@ -17,7 +17,7 @@ describe('JoiModelValidator', () => {
                 name: joi.string().regex(/^[\d\w -]+$/u).max(10).min(3).required(),
                 address: joi.string().required(),
                 age: joi.number().min(15).max(99).integer().optional(),
-                gender: joi.only('male', 'female').optional(),
+                gender: joi.valid('male', 'female').optional(),
             },
             schemaMapId: {
                 theID: joi.number().min(1).required(),
@@ -55,8 +55,8 @@ describe('JoiModelValidator', () => {
             const validator = new JoiModelValidator<SampleModel>({
                     schemaMapModel: { name: joi.string() },
                     schemaMapId: {
-                        id: extJoi.genn().bigint().required(),
-                        tenantId: extJoi.genn().bigint().required(),
+                        id: extJoi.bigint().required(),
+                        tenantId: extJoi.bigint().required(),
                     },
                 }),
                 target = {
