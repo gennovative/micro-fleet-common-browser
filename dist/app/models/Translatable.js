@@ -1,29 +1,45 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const ModelPassthroughMapper_1 = require("../translators/ModelPassthroughMapper");
 const validate_internal_1 = require("../validators/validate-internal");
+const TRANSLATOR = Symbol();
 const VALIDATOR = Symbol();
 class Translatable {
+    static getTranslator() {
+        let translator;
+        if (!this.hasOwnProperty(TRANSLATOR)) {
+            translator = this.$createTranslator();
+            this[TRANSLATOR] = translator;
+        }
+        else {
+            translator = this[TRANSLATOR];
+        }
+        return translator;
+    }
+    static $createTranslator() {
+        return new ModelPassthroughMapper_1.PassthroughAutoMapper(this.getValidator());
+    }
     static getValidator() {
-        let validator = this[VALIDATOR];
+        let validator;
         // "validator" may be `null` when class doesn't need validating
-        if (validator === undefined) {
+        // if (validator === undefined) {
+        if (!this.hasOwnProperty(VALIDATOR)) {
             validator = this.$createValidator();
             this[VALIDATOR] = validator;
+        }
+        else {
+            validator = this[VALIDATOR];
         }
         return validator;
     }
     static $createValidator() {
         return validate_internal_1.createJoiValidator(this);
     }
-    static from(source) {
-        return this.getValidator().whole(source);
+    static from(source, options = {}) {
+        return this.getTranslator().whole(source, options);
     }
-    static fromMany(source) {
-        if (!source) {
-            return null;
-        }
-        // tslint:disable-next-line: prefer-const
-        return source.map(s => this.getValidator().whole(s));
+    static fromMany(source, options = {}) {
+        return this.getTranslator().wholeMany(source, options);
     }
 }
 exports.Translatable = Translatable;

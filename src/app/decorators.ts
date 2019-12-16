@@ -18,7 +18,7 @@ export type Decorators = {
      *
      * class ModelA {
      *   @array({
-     *     items: joi.string().only(ALLOWED).required()
+     *     items: joi.string().valid(ALLOWED).required()
      *   })
      *   fields: string[]
      * }
@@ -37,7 +37,7 @@ export type Decorators = {
     /**
      * Used to decorate model class' properties to assert it must be a Big Int.
      */
-    bigInt: typeof v.bigInt,
+    bigint: typeof v.bigint,
 
     /**
      * Used to decorate model class' properties to assert it must be a boolean.
@@ -96,12 +96,12 @@ export type Decorators = {
      * enum AccountStatus { ACTIVE = 'active', LOCKED = 'locked' }
      *
      * class Model {
-     *   @only(AccountStatus.ACTIVE, AccountStatus.LOCKED)
+     *   @valid(AccountStatus.ACTIVE, AccountStatus.LOCKED)
      *   status: AccountStatus
      * }
      * ```
      */
-    only: typeof v.only,
+    valid: typeof v.valid,
 
     /**
      * Used to decorate model class' properties to assert it must exist and have non-undefined value.
@@ -153,7 +153,7 @@ export type Decorators = {
 
     /**
      * Used to decorate model class' properties to declare complex validation rules.
-     * Note that this decorator overrides other ones such as @defaultAs(), @number(), @only()...
+     * Note that this decorator overrides other ones such as @defaultAs(), @number(), @valid()...
      *
      * @param {joi.SchemaLike} schema A single schema rule for this property.
      *
@@ -192,13 +192,13 @@ export type Decorators = {
 
 export const decorators: Decorators = {
     array: v.array,
-    bigInt: v.bigInt,
+    bigint: v.bigint,
     boolean: v.boolean,
     datetime: v.datetime,
     defaultAs: v.defaultAs,
     id: v.id,
     number: v.number,
-    only: v.only,
+    valid: v.valid,
     required: v.required,
     string: v.string,
     validateClass: v.validateClass,

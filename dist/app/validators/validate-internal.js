@@ -41,11 +41,15 @@ exports.deleteClassValidationMetadata = deleteClassValidationMetadata;
 /**
  * @param classMeta Must be passed to avoid calling costly function `getClassValidationMetadata`
  */
-function extractPropValidationMetadata(classMeta, propName) {
-    return classMeta.props[propName] || {
-        type: () => joi.string(),
-        rules: [],
-    };
+function extractPropValidationMetadata(classMeta, propName, ownerClass) {
+    const found = classMeta.props[propName];
+    return (found != null && found.ownerClass === ownerClass)
+        ? found
+        : {
+            type: () => joi.string(),
+            rules: [],
+            ownerClass,
+        };
 }
 exports.extractPropValidationMetadata = extractPropValidationMetadata;
 function setPropValidationMetadata(Class, classMeta, propName, propMeta) {

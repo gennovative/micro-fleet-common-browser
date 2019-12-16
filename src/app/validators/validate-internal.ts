@@ -7,6 +7,7 @@ import { JoiModelValidator, JoiModelValidatorConstructorOptions } from './JoiMod
 // This file is for internal use, do not export to (lib)user
 
 export type PropValidationMetadata = {
+    ownerClass: any,
     type?(): joi.AnySchema;
     rules?: Array<(prev: joi.AnySchema) => joi.AnySchema>,
     rawSchema?: joi.SchemaLike,
@@ -63,11 +64,18 @@ export function deleteClassValidationMetadata(Class: Function): void {
 /**
  * @param classMeta Must be passed to avoid calling costly function `getClassValidationMetadata`
  */
-export function extractPropValidationMetadata(classMeta: ClassValidationMetadata, propName: string | symbol): PropValidationMetadata {
-    return classMeta.props[propName as string] || {
-        type: () => joi.string(),
-        rules: [],
-    }
+
+export function extractPropValidationMetadata(
+    classMeta: ClassValidationMetadata, propName: string | symbol, ownerClass: any,
+): PropValidationMetadata {
+    const found = classMeta.props[propName as string]
+    return (found != null && found.ownerClass === ownerClass)
+        ? found
+        : {
+            type: () => joi.string(),
+            rules: [],
+            ownerClass,
+        }
 }
 
 export function setPropValidationMetadata(

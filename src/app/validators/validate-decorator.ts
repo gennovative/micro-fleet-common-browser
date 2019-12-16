@@ -62,10 +62,13 @@ export function array(opts: ArrayDecoratorOptions): PropertyDecorator {
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.type = () => {
-            const itemRules = Array.isArray(opts.items) ? opts.items : [opts.items]
-            return joi.array().items(itemRules)
+            const schema = joi.array()
+            if (Array.isArray(opts.items)) {
+                return schema.items(...opts.items)
+            }
+            return schema.items(opts.items)
         }
         (opts.minLength != null) && propMeta.rules.push(prev => (prev as joi.ArraySchema).min(opts.minLength));
         (opts.maxLength != null) && propMeta.rules.push(prev => (prev as joi.ArraySchema).max(opts.maxLength))
@@ -91,7 +94,7 @@ export function boolean(opts: BooleanDecoratorOptions = {}): PropertyDecorator {
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.type = () => joi.boolean().options(opts)
         v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta)
     }
@@ -109,11 +112,11 @@ export type BigIntDecoratorOptions = {
 /**
  * Used to decorate model class' properties to assert it must be a Big Int.
  */
-export function bigInt({ convert }: BigIntDecoratorOptions = { convert: false }): PropertyDecorator {
+export function bigint({ convert }: BigIntDecoratorOptions = { convert: false }): PropertyDecorator {
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.type = () => {
             const schema = extJoi.bigint()
             convert && schema.asNative()
@@ -149,7 +152,7 @@ export function number({ min, max, ...opts }: NumberDecoratorOptions = {}): Prop
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.type = () => joi.number().options(opts);
         (min != null) && propMeta.rules.push(prev => (prev as joi.NumberSchema).min(min));
         (max != null) && propMeta.rules.push(prev => (prev as joi.NumberSchema).max(max))
@@ -206,7 +209,7 @@ export function datetime({ isUTC, translator, convert = false }: DateTimeDecorat
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.type = () => {
             const schema = extJoi.dateString()
             isUTC && schema.isUTC()
@@ -226,7 +229,7 @@ export function defaultAs(value: any): PropertyDecorator {
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.rules.push(prev => prev.default(value))
         v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta)
     }
@@ -243,16 +246,16 @@ export function defaultAs(value: any): PropertyDecorator {
  * enum AccountStatus { ACTIVE = 'active', LOCKED = 'locked' }
  *
  * class Model {
- *   @only(AccountStatus.ACTIVE, AccountStatus.LOCKED)
+ *   @valid(AccountStatus.ACTIVE, AccountStatus.LOCKED)
  *   status: AccountStatus
  * }
  * ```
  */
-export function only(...values: any[]): PropertyDecorator {
+export function valid(...values: any[]): PropertyDecorator {
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         // Passing array might be a mistake causing array in array [[value]]
         // We should correct it back to spreaded list of params
         if (values.length == 1 && Array.isArray(values[0])) {
@@ -272,7 +275,7 @@ export function required(allowNull: boolean = false): PropertyDecorator {
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.rules.push(prev => prev.required())
         allowNull && propMeta.rules.push(prev => prev.allow(null))
         v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta)
@@ -372,7 +375,7 @@ export function string(opts: StringDecoratorOptions = { allowEmpty: true }): Pro
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.type = () => {
             const schema = joi.string()
             return opts.allowEmpty
@@ -468,7 +471,7 @@ export function validateProp(schema: joi.SchemaLike): PropertyDecorator {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         Guard.assertArgDefined('schema', schema)
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
-        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName)
+        const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
         propMeta.rawSchema = schema
         v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta)
     }

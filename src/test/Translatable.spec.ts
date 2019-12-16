@@ -12,9 +12,8 @@ import { Translatable } from '../app/models/Translatable'
  */
 
 describe('Translatable', function () {
-    // tslint:disable:no-invalid-this
-    this.timeout(5000)
-    // this.timeout(60000) // For debugging
+    // this.timeout(5000)
+    this.timeout(60000) // For debugging
 
     describe('validateClass', () => {
 
@@ -52,31 +51,39 @@ describe('Translatable', function () {
                     name: 'gen-no-va',
                     address: '^!@',
                 }
+            let errorOne, convertedOne, errorTwo, convertedTwo
 
             // Act
-            // const translator = ModelA.getTranslator()
-            const [errorOne, convertedOne] = ModelA.from(sourceOne)
-            const [errorTwo, convertedTwo] = ModelA.from(sourceTwo)
+            try {
+                convertedOne = ModelA.from(sourceOne)
+            } catch (err) {
+                errorOne = err
+            }
 
+            try {
+                convertedTwo = ModelA.from(sourceTwo)
+            } catch (err) {
+                errorTwo = err
+            }
 
             // Assert
             errorOne && console.error(errorOne)
 
             expect(errorOne, 'errorOne').not.to.exist
             expect(convertedOne, 'convertedOne').to.exist
-            expect(convertedOne.theID, 'theID').to.equal(sourceOne.theID)
-            expect(convertedOne.name, 'name').to.equal(sourceOne.name)
-            expect(convertedOne.address, 'address').to.equal(sourceOne.address)
-            expect(convertedOne.age, 'age').to.equal(sourceOne.age)
-            expect(convertedOne.gender, 'gender').to.equal(sourceOne.gender)
+            expect(convertedOne.theID, 'theID').to.equal(sourceOne.theID, 'theID')
+            expect(convertedOne.name, 'name').to.equal(sourceOne.name, 'name')
+            expect(convertedOne.address, 'address').to.equal(sourceOne.address, 'address')
+            expect(convertedOne.age, 'age').to.equal(sourceOne.age, 'age')
+            expect(convertedOne.gender, 'gender').to.equal(sourceOne.gender, 'gender')
 
-            errorTwo && console.error(errorTwo)
+            errorTwo && console.error(errorTwo, 'errorTwo')
 
             expect(errorTwo, 'errorTwo').not.to.exist
             expect(convertedTwo, 'convertedTwo').to.exist
-            expect(convertedTwo.theID, 'theID').to.equal(sourceTwo.theID)
-            expect(convertedTwo.name, 'name').to.equal(sourceTwo.name)
-            expect(convertedTwo.address, 'address').to.equal(sourceTwo.address)
+            expect(convertedTwo.theID, 'theID').to.equal(sourceTwo.theID, 'theID')
+            expect(convertedTwo.name, 'name').to.equal(sourceTwo.name, 'name')
+            expect(convertedTwo.address, 'address').to.equal(sourceTwo.address, 'address')
             expect(convertedTwo.age, 'age').not.to.exist
             expect(convertedTwo.gender, 'gender').not.to.exist
         })
@@ -98,15 +105,29 @@ describe('Translatable', function () {
                 }
 
             // Act
+            let errorOne, validatedOne
+            try {
+                validatedOne = ModelA.from(targetOne)
+            }
+            catch (err) {
+                errorOne = err
+            }
+
+            let errorTwo, validatedTwo
+            try {
+                validatedTwo = ModelA.from(targetTwo)
+            }
+            catch (err) {
+                errorTwo = err
+            }
+
             const validator = ModelA.getValidator()
-            const [errorOne, validatedOne] = validator.whole(targetOne),
-                [errorTwo, validatedTwo] = validator.whole(targetTwo),
-                [errorThree, validatedThree] = validator.whole(targetThree)
+            const [errorThree, validatedThree] = validator.whole(targetThree)
 
             // Assert
             expect(validatedOne, 'validatedOne').not.to.exist
             expect(errorOne, 'errorOne').to.exist
-            expect(errorOne.details).to.have.length(2)
+            expect(errorOne.details, 'errorOne.details.length').to.have.length(2)
             expect(errorOne.details[0].path.length).to.equal(1)
             expect(errorOne.details[0].path[0]).to.equal('name')
             expect(errorOne.details[0].message).to.equal('"name" is required')
@@ -128,7 +149,7 @@ describe('Translatable', function () {
             expect(errorTwo.details[2].message).to.equal('"age" must be larger than or equal to 15')
 
             expect(validatedThree, 'validatedThree').not.to.exist
-            expect(errorThree).to.exist
+            expect(errorThree, 'errorThree').to.exist
             expect(errorThree.details).to.have.length(5)
             expect(errorThree.details[0].path.length).to.equal(1)
             expect(errorThree.details[0].path[0]).to.equal('name')
@@ -158,7 +179,7 @@ describe('Translatable', function () {
             @d.validateProp(joi.string().required())
             public address: string = undefined
 
-            @d.only('soccer', 'football', 'handball')
+            @d.valid('soccer', 'football', 'handball')
             public hobbies: string = undefined
 
             public theID: string = undefined
@@ -175,15 +196,19 @@ describe('Translatable', function () {
                     hobbies: 'football',
                     gender: 'male',
                 }
+            let error, converted
 
             // Act
-            const validator = ModelB.getValidator()
-            const [error, converted] = validator.whole(source)
+            try {
+                converted = ModelB.from(source)
+            } catch (err) {
+                error = err
+            }
 
             // Assert
             error && console.error(error)
 
-            expect(error, 'error').not.to.exist
+            expect(error).not.to.exist
             expect(converted, 'converted').to.exist
             expect(converted.theID, 'theID').not.to.exist
             expect(converted.name, 'name').not.to.exist
@@ -213,7 +238,7 @@ describe('Translatable', function () {
             @d.number({ min: 15, max: 99 })
             public age: number = undefined
 
-            @d.only('male', 'female')
+            @d.valid('male', 'female')
             public gender: 'male' | 'female' = undefined
         }
 
@@ -231,10 +256,20 @@ describe('Translatable', function () {
                     name: 'gen-no-va',
                     address: '^!@',
                 }
+            let errorOne, convertedOne, errorTwo, convertedTwo
 
             // Act
-            const [errorOne, convertedOne] = ModelB.from(sourceOne)
-            const [errorTwo, convertedTwo] = ModelB.from(sourceTwo)
+            try {
+                convertedOne = ModelB.from(sourceOne)
+            } catch (err) {
+                errorOne = err
+            }
+
+            try {
+                convertedTwo = ModelB.from(sourceTwo)
+            } catch (err) {
+                errorTwo = err
+            }
 
             // Assert
             errorOne && console.error(errorOne)
@@ -247,7 +282,7 @@ describe('Translatable', function () {
             expect(convertedOne.age, 'age').to.equal(sourceOne.age)
             expect(convertedOne.gender, 'gender').to.equal(sourceOne.gender)
 
-            errorTwo && console.error(errorTwo)
+            errorTwo && console.error(errorTwo, 'errorTwo')
 
             expect(errorTwo, 'errorTwo').not.to.exist
             expect(convertedTwo, 'convertedTwo').to.exist
@@ -278,7 +313,7 @@ describe('Translatable', function () {
             // Assert: `required` validation is ignored.
             errorOne && console.error(errorOne)
             expect(validatedOne, 'validatedOne').to.exist
-            expect(validatedOne.age).to.equal(targetOne.age)
+            expect(validatedOne.age, 'age').to.equal(targetOne.age)
             expect(errorOne, 'errorOne').not.to.exist
 
             // Assert: `required` properties don't allow `null`.
@@ -295,13 +330,13 @@ describe('Translatable', function () {
     }) // describe 'decorators'
 
 
-    describe('inheritance', () => {
+    describe.only('inheritance', () => {
 
         @d.validateClass({
             schemaMapModel: {
                 name: joi.string().regex(/^[\d\w -]+$/u).max(10).min(3).required(),
                 address: joi.string().required(),
-                age: joi.number().min(15).max(99).integer()
+                age: joi.number().min(15).max(50).integer()
                     .allow(null).optional(),
                 gender: joi.valid('male', 'female').allow(null).optional(),
             },
@@ -320,10 +355,13 @@ describe('Translatable', function () {
         const HOBBIES_1 = ['soccer', 'football', 'handball']
         const GENDERS_1 = ['transmale', 'transfemale']
         class ChildOneC extends ModelC {
-            @d.only(HOBBIES_1)
+            @d.number({ min: 10, max: 30 })
+            public age: number = undefined
+
+            @d.valid(HOBBIES_1)
             public hobbies: string = undefined
 
-            @d.only(...GENDERS_1)
+            @d.valid(...GENDERS_1)
             public gender: string = undefined
         }
 
@@ -340,14 +378,25 @@ describe('Translatable', function () {
                 sourceTwo = {
                     theID: 123,
                     // name: 'gen-no-va', // Skip required property
+                    age: 40,
                     address: '^!@',
-                    gender: 'homo',
+                    gender: 'male',
                     hobbies: 'gambling', // Not allowed value
                 }
+            let errorOne, convertedOne, errorTwo, convertedTwo
 
             // Act
-            const [errorOne, convertedOne] = ChildOneC.from(sourceOne),
-                [errorTwo, convertedTwo] = ChildOneC.from(sourceTwo)
+            try {
+                convertedOne = ChildOneC.from(sourceOne)
+            } catch (err) {
+                errorOne = err
+            }
+
+            try {
+                convertedTwo = ChildOneC.from(sourceTwo)
+            } catch (err) {
+                errorTwo = err
+            }
 
             // Assert
             errorOne && console.error(errorOne)
@@ -364,20 +413,25 @@ describe('Translatable', function () {
 
             expect(convertedTwo, 'convertedTwo').not.to.exist
             expect(errorTwo, 'errorTwo').to.exist
-            expect(errorTwo.details, 'details.length').to.have.length(3)
+            expect(errorTwo.details, 'details.length').to.have.length(4)
             expect(errorTwo.details[0].path[0]).to.equal('name')
             expect(errorTwo.details[0].message).to.equal('"name" is required')
-            expect(errorTwo.details[1].path[0]).to.equal('gender')
-            expect(errorTwo.details[1].message).to.equal('"gender" must be one of [transmale, transfemale]')
-            expect(errorTwo.details[2].path[0]).to.equal('hobbies')
-            expect(errorTwo.details[2].message).to.equal('"hobbies" must be one of [soccer, football, handball]')
+            expect(errorTwo.details[1].path[0]).to.equal('age')
+            expect(errorTwo.details[1].message).to.equal('"age" must be less than or equal to 30')
+            expect(errorTwo.details[2].path[0]).to.equal('gender')
+            expect(errorTwo.details[2].message).to.equal('"gender" must be one of [transmale, transfemale]')
+            expect(errorTwo.details[3].path[0]).to.equal('hobbies')
+            expect(errorTwo.details[3].message).to.equal('"hobbies" must be one of [soccer, football, handball]')
         })
 
 
         const HOBBIES_2 = ['gingerbeard', 'kitkat', 'jelly']
         const GENDERS_2 = ['gay', 'lesbian']
         class ChildTwoC extends ModelC {
-            @d.only(HOBBIES_2)
+            @d.number({ min: 10, max: 30 })
+            public age: number = undefined
+
+            @d.valid(HOBBIES_2)
             public hobbies: string = undefined
 
             @d.validateProp(joi.valid(...GENDERS_2))
@@ -397,14 +451,25 @@ describe('Translatable', function () {
                 sourceTwo = {
                     theID: 123,
                     // name: 'gen-no-va', // Skip required property
+                    age: 40,
                     address: '^!@',
-                    gender: 'homo',
+                    gender: 'male',
                     hobbies: 'gambling', // Not allowed value
                 }
+            let errorOne, convertedOne, errorTwo, convertedTwo
 
             // Act
-            const [errorOne, convertedOne] = ChildTwoC.from(sourceOne),
-                [errorTwo, convertedTwo] = ChildTwoC.from(sourceTwo)
+            try {
+                convertedOne = ChildTwoC.from(sourceOne)
+            } catch (err) {
+                errorOne = err
+            }
+
+            try {
+                convertedTwo = ChildTwoC.from(sourceTwo)
+            } catch (err) {
+                errorTwo = err
+            }
 
             // Assert
             errorOne && console.error(errorOne)
@@ -421,13 +486,15 @@ describe('Translatable', function () {
 
             expect(convertedTwo, 'convertedTwo').not.to.exist
             expect(errorTwo, 'errorTwo').to.exist
-            expect(errorTwo.details, 'errorTwo.details.length').to.have.length(3)
+            expect(errorTwo.details, 'errorTwo.details.length').to.have.length(4)
             expect(errorTwo.details[0].path[0], 'details[0].path').to.equal('name')
             expect(errorTwo.details[0].message, 'details[0].message').to.equal('"name" is required')
-            expect(errorTwo.details[1].path[0], 'details[1].path').to.equal('gender')
-            expect(errorTwo.details[1].message, 'details[1].message').to.equal('"gender" must be one of [gay, lesbian]')
-            expect(errorTwo.details[2].path[0], 'details[2].path').to.equal('hobbies')
-            expect(errorTwo.details[2].message, 'details[2].message').to.equal('"hobbies" must be one of [gingerbeard, kitkat, jelly]')
+            expect(errorTwo.details[1].path[0]).to.equal('age')
+            expect(errorTwo.details[1].message).to.equal('"age" must be less than or equal to 30')
+            expect(errorTwo.details[2].path[0], 'details[1].path').to.equal('gender')
+            expect(errorTwo.details[2].message, 'details[1].message').to.equal('"gender" must be one of [gay, lesbian]')
+            expect(errorTwo.details[3].path[0], 'details[2].path').to.equal('hobbies')
+            expect(errorTwo.details[3].message, 'details[2].message').to.equal('"hobbies" must be one of [gingerbeard, kitkat, jelly]')
         })
 
 
@@ -439,7 +506,7 @@ describe('Translatable', function () {
             },
         })
         class ChildThreeC extends ModelC {
-            @d.only(HOBBIES_3)
+            @d.valid(HOBBIES_3)
             public hobbies: string = undefined
         }
 
@@ -460,10 +527,20 @@ describe('Translatable', function () {
                     gender: 'homo',
                     hobbies: 'gambling', // Not allowed value
                 }
+            let errorOne, convertedOne, errorTwo, convertedTwo
 
             // Act
-            const [errorOne, convertedOne] = ChildThreeC.from(sourceOne),
-                [errorTwo, convertedTwo] = ChildThreeC.from(sourceTwo)
+            try {
+                convertedOne = ChildThreeC.from(sourceOne)
+            } catch (err) {
+                errorOne = err
+            }
+
+            try {
+                convertedTwo = ChildThreeC.from(sourceTwo)
+            } catch (err) {
+                errorTwo = err
+            }
 
             // Assert
             errorOne && console.error(errorOne)
@@ -486,5 +563,134 @@ describe('Translatable', function () {
             expect(errorTwo.details[0].message, 'details[0].message').to.equal('"gender" must be one of [genderless, bigender]')
         })
 
+
+        class GrandChildOne extends ChildOneC {
+            @d.number({ max: 80 })
+            public age: number = undefined
+        }
+
+        it('Should override individual parent rules with decorators', () => {
+            // Arrange
+            const sourceOne = {
+                    theID: 1,
+                    name: 'Gennova123',
+                    address: 'Unlimited length street name',
+                    age: 7,
+                    gender: 'transmale',
+                    hobbies: 'handball',
+                },
+                sourceTwo = {
+                    theID: 123,
+                    // name: 'gen-no-va', // Skip required property
+                    age: 100,
+                    address: '^!@',
+                    gender: 'male',
+                    hobbies: 'gambling', // Not allowed value
+                }
+            let errorOne, convertedOne, errorTwo, convertedTwo
+
+            // Act
+            try {
+                convertedOne = GrandChildOne.from(sourceOne)
+            } catch (err) {
+                errorOne = err
+            }
+
+            try {
+                convertedTwo = GrandChildOne.from(sourceTwo)
+            } catch (err) {
+                errorTwo = err
+            }
+
+            // Assert
+            errorOne && console.error(errorOne)
+
+            expect(errorOne, 'errorOne').not.to.exist
+            expect(convertedOne, 'convertedOne').to.exist
+            expect(convertedOne.theID, 'theID').to.equal(sourceOne.theID)
+            expect(convertedOne.name, 'name').to.equal(sourceOne.name)
+            expect(convertedOne.address, 'address').to.equal(sourceOne.address)
+            expect(convertedOne.age, 'age').to.equal(sourceOne.age)
+            expect(convertedOne.gender, 'gender').to.equal(sourceOne.gender)
+
+            // errorTwo && console.error(errorTwo, 'errorTwo')
+
+            expect(convertedTwo, 'convertedTwo').not.to.exist
+            expect(errorTwo, 'errorTwo').to.exist
+            expect(errorTwo.details, 'details.length').to.have.length(4)
+            expect(errorTwo.details[0].path[0]).to.equal('name')
+            expect(errorTwo.details[0].message).to.equal('"name" is required')
+            expect(errorTwo.details[1].path[0]).to.equal('age')
+            expect(errorTwo.details[1].message).to.equal('"age" must be less than or equal to 80')
+            expect(errorTwo.details[2].path[0]).to.equal('gender')
+            expect(errorTwo.details[2].message).to.equal('"gender" must be one of [transmale, transfemale]')
+            expect(errorTwo.details[3].path[0]).to.equal('hobbies')
+            expect(errorTwo.details[3].message).to.equal('"hobbies" must be one of [soccer, football, handball]')
+        })
+
+
+        class GrandChildTwo extends ChildTwoC {
+            @d.validateProp(joi.number().max(80))
+            public age: number = undefined
+        }
+
+        it('Should override individual parent rules with validateProp()', () => {
+            // Arrange
+            const sourceOne = {
+                    theID: 1,
+                    name: 'Gennova123',
+                    address: 'Unlimited length street name',
+                    age: 7,
+                    gender: 'lesbian',
+                    hobbies: 'kitkat',
+                },
+                sourceTwo = {
+                    theID: 123,
+                    // name: 'gen-no-va', // Skip required property
+                    age: 100,
+                    address: '^!@',
+                    gender: 'male',
+                    hobbies: 'gambling', // Not allowed value
+                }
+            let errorOne, convertedOne, errorTwo, convertedTwo
+
+            // Act
+            try {
+                convertedOne = GrandChildTwo.from(sourceOne)
+            } catch (err) {
+                errorOne = err
+            }
+
+            try {
+                convertedTwo = GrandChildTwo.from(sourceTwo)
+            } catch (err) {
+                errorTwo = err
+            }
+
+            // Assert
+            errorOne && console.error(errorOne)
+
+            expect(errorOne, 'errorOne').not.to.exist
+            expect(convertedOne, 'convertedOne').to.exist
+            expect(convertedOne.theID, 'theID').to.equal(sourceOne.theID)
+            expect(convertedOne.name, 'name').to.equal(sourceOne.name)
+            expect(convertedOne.address, 'address').to.equal(sourceOne.address)
+            expect(convertedOne.age, 'age').to.equal(sourceOne.age)
+            expect(convertedOne.gender, 'gender').to.equal(sourceOne.gender)
+
+            // errorTwo && console.error(errorTwo, 'errorTwo')
+
+            expect(convertedTwo, 'convertedTwo').not.to.exist
+            expect(errorTwo, 'errorTwo').to.exist
+            expect(errorTwo.details, 'details.length').to.have.length(4)
+            expect(errorTwo.details[0].path[0]).to.equal('name')
+            expect(errorTwo.details[0].message).to.equal('"name" is required')
+            expect(errorTwo.details[1].path[0]).to.equal('age')
+            expect(errorTwo.details[1].message).to.equal('"age" must be less than or equal to 80')
+            expect(errorTwo.details[2].path[0]).to.equal('gender')
+            expect(errorTwo.details[2].message).to.equal('"gender" must be one of [gay, lesbian]')
+            expect(errorTwo.details[3].path[0]).to.equal('hobbies')
+            expect(errorTwo.details[3].message).to.equal('"hobbies" must be one of [gingerbeard, kitkat, jelly]')
+        })
     }) // describe 'inheritance'
 })

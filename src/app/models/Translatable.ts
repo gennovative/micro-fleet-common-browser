@@ -1,3 +1,4 @@
+import { PassthroughAutoMapper, IModelAutoMapper, MappingOptions } from '../translators/ModelPassthroughMapper'
 import { IModelValidator } from '../validators/JoiModelValidator'
 import { createJoiValidator } from '../validators/validate-internal'
 import { ValidationError } from '../validators/ValidationError'
@@ -18,16 +19,36 @@ type Newable<T = any> = (new (...args: any[]) => T)
 
 type TranslatableClass<U> = Newable<U> & typeof Translatable
 
+const TRANSLATOR = Symbol()
 const VALIDATOR = Symbol()
 
 export abstract class Translatable {
+    public static getTranslator<TT extends Translatable>(this: TranslatableClass<TT>): IModelAutoMapper<TT> {
+        let translator
+        if (!this.hasOwnProperty(TRANSLATOR)) {
+            translator = this.$createTranslator<TT>()
+            this[TRANSLATOR] = translator
+        }
+        else {
+            translator = this[TRANSLATOR]
+        }
+        return translator
+    }
+
+    protected static $createTranslator<TT extends Translatable>(this: TranslatableClass<TT>): IModelAutoMapper<TT> {
+        return new PassthroughAutoMapper(this.getValidator<TT>())
+    }
 
     public static getValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT> {
-        let validator = this[VALIDATOR]
+        let validator
         // "validator" may be `null` when class doesn't need validating
-        if (validator === undefined) {
+        // if (validator === undefined) {
+        if (!this.hasOwnProperty(VALIDATOR)) {
             validator = this.$createValidator()
             this[VALIDATOR] = validator
+        }
+        else {
+            validator = this[VALIDATOR]
         }
         return validator
     }
@@ -36,15 +57,12 @@ export abstract class Translatable {
         return createJoiValidator(this)
     }
 
-    public static from<FT extends Translatable>(this: TranslatableClass<FT>, source: object): [ValidationError, FT] {
-        return this.getValidator<FT>().whole(source)
+    public static from<FT extends Translatable>(this: TranslatableClass<FT>, source: object, options: MappingOptions = {}): FT {
+        return this.getTranslator<FT>().whole(source, options)
     }
 
-    public static fromMany<FT extends Translatable>(this: TranslatableClass<FT>, source: object[]): Array<[ValidationError, FT]> {
-        if (!source) { return null }
-
-        // tslint:disable-next-line: prefer-const
-        return source.map(s => this.getValidator<FT>().whole(s))
+    public static fromMany<FT extends Translatable>(this: TranslatableClass<FT>, source: object[], options: MappingOptions = {}): FT[] {
+        return this.getTranslator<FT>().wholeMany(source, options)
     }
 
 }
