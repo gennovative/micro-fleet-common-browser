@@ -117,11 +117,8 @@ export function bigint({ convert }: BigIntDecoratorOptions = { convert: false })
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
         const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
-        propMeta.type = () => {
-            const schema = extJoi.bigint()
-            convert && schema.asNative()
-            return schema
-        }
+        propMeta.type = () => extJoi.bigint()
+        Boolean(convert) && propMeta.rules.push((prev: any) => prev.asNative())
         v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta)
     }
 }
@@ -161,7 +158,7 @@ export function number({ min, max, ...opts }: NumberDecoratorOptions = {}): Prop
 }
 
 
-export type DateTimeDecoratorOptions = {
+export type DateStringDecoratorOptions = {
     /**
      * Whether the input string is in UTC format.
      * Default: false.
@@ -186,13 +183,13 @@ export type DateTimeDecoratorOptions = {
  *
  * ```typescript
  * class ModelA {
- *    @datetime()
+ *    @dateString()
  *    birthdate: string
  * }
  *
  *
  * class ModelB {
- *    @datetime({ convert: true })
+ *    @dateString({ convert: true })
  *    birthdate: Date
  * }
  *
@@ -200,22 +197,19 @@ export type DateTimeDecoratorOptions = {
  * import * as moment from 'moment'
  *
  * class ModelC {
- *    @datetime({ isUTC: true, translator: moment, convert: true })
+ *    @dateString({ isUTC: true, translator: moment, convert: true })
  *    birthdate: moment.Moment
  * }
  * ```
  */
-export function datetime({ isUTC, translator, convert = false }: DateTimeDecoratorOptions = {}): PropertyDecorator {
+export function dateString({ isUTC, translator, convert = false }: DateStringDecoratorOptions = {}): PropertyDecorator {
     return function (proto: any, propName: string | symbol): void {
         Guard.assertIsTruthy(propName, 'This decorator is for properties inside class')
         const classMeta: v.ClassValidationMetadata = v.getClassValidationMetadata(proto.constructor)
         const propMeta: v.PropValidationMetadata = v.extractPropValidationMetadata(classMeta, propName, proto.constructor)
-        propMeta.type = () => {
-            const schema = extJoi.dateString()
-            isUTC && schema.isUTC()
-            convert && schema.translate(translator)
-            return schema
-        }
+        propMeta.type = () => extJoi.dateString()
+        Boolean(isUTC) && propMeta.rules.push((prev: any) => prev.isUTC())
+        Boolean(convert) && propMeta.rules.push((prev: any) => prev.translate(translator))
         v.setPropValidationMetadata(proto.constructor, classMeta, propName, propMeta)
     }
 }
@@ -418,8 +412,8 @@ function copyStatic(SrcClass: any, DestClass: any, props: string[] = []): void {
 
 /**
  * Used to decorate model class to __exclusively__ declare validation rules,
- * which means it __removes__ all rules and options from property decorator
- * as well as parent classes, then applies the specified `validatorOptions`.
+ * which means it __replaces__ all rules and options from parent class
+ * as well as property rules in same class.
  *
  * @param {JoiModelValidatorConstructorOptions} validatorOptions The options for creating `JoiModelValidator` instance.
  */

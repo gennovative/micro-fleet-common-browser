@@ -1,13 +1,13 @@
 import { PassthroughAutoMapper, IModelAutoMapper, MappingOptions } from '../translators/ModelPassthroughMapper'
 import { IModelValidator } from '../validators/JoiModelValidator'
 import { createJoiValidator } from '../validators/validate-internal'
-import { ValidationError } from '../validators/ValidationError'
+import { ValidationOptions } from '@hapi/joi'
 
 
 export interface ITranslatable<T = any> {
     getValidator(): IModelValidator<T>
-    from(source: object): [ValidationError, T]
-    fromMany(source: object[]): Array<[ValidationError, T]>
+    from(source: object): T
+    fromMany(source: object[]): Array<T>
 }
 
 
@@ -41,8 +41,6 @@ export abstract class Translatable {
 
     public static getValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT> {
         let validator
-        // "validator" may be `null` when class doesn't need validating
-        // if (validator === undefined) {
         if (!this.hasOwnProperty(VALIDATOR)) {
             validator = this.$createValidator()
             this[VALIDATOR] = validator
@@ -53,14 +51,28 @@ export abstract class Translatable {
         return validator
     }
 
-    protected static $createValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT> {
-        return createJoiValidator(this)
+    protected static $createValidator<VT extends Translatable>(
+        this: TranslatableClass<VT>,
+        options?: ValidationOptions,
+    ): IModelValidator<VT> {
+        return createJoiValidator(this, options)
     }
 
+    /**
+     * Converts arbitrary object into instance of this class type.
+     *
+     * If no class property is marked for validation, all properties are copied.
+     *
+     * If just some class properties are marked for validation, they are validated then copied, the rest are ignored.
+     */
     public static from<FT extends Translatable>(this: TranslatableClass<FT>, source: object, options: MappingOptions = {}): FT {
         return this.getTranslator<FT>().whole(source, options)
     }
 
+    /**
+     * Converts array of arbitrary objects into array of instances of this class type.
+     * Conversion rule is same as `from()` method.
+     */
     public static fromMany<FT extends Translatable>(this: TranslatableClass<FT>, source: object[], options: MappingOptions = {}): FT[] {
         return this.getTranslator<FT>().wholeMany(source, options)
     }

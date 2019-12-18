@@ -359,7 +359,7 @@ declare module '@micro-fleet/common-browser/translators/ModelPassthroughMapper' 
 declare module '@micro-fleet/common-browser/validators/validate-internal' {
     /// <reference types="hapi__joi" />
     import * as joi from '@hapi/joi';
-    import { JoiModelValidator, JoiModelValidatorConstructorOptions } from '@micro-fleet/common-browser/validators/JoiModelValidator';
+    import { JoiModelValidator, JoiModelValidatorConstructorOptions, ValidationOptions } from '@micro-fleet/common-browser/validators/JoiModelValidator';
     export type PropValidationMetadata = {
         ownerClass: any;
         type?(): joi.AnySchema;
@@ -381,24 +381,36 @@ declare module '@micro-fleet/common-browser/validators/validate-internal' {
      */
     export function extractPropValidationMetadata(classMeta: ClassValidationMetadata, propName: string | symbol, ownerClass: any): PropValidationMetadata;
     export function setPropValidationMetadata(Class: Function, classMeta: ClassValidationMetadata, propName: string | symbol, propMeta: PropValidationMetadata): void;
-    export function createJoiValidator<T>(Class: Function): JoiModelValidator<T>;
+    export function createJoiValidator<T>(Class: Function, joiOptions?: ValidationOptions): JoiModelValidator<T>;
 
 }
 declare module '@micro-fleet/common-browser/models/Translatable' {
+    /// <reference types="hapi__joi" />
     import { IModelAutoMapper, MappingOptions } from '@micro-fleet/common-browser/translators/ModelPassthroughMapper';
     import { IModelValidator } from '@micro-fleet/common-browser/validators/JoiModelValidator';
-    import { ValidationError } from '@micro-fleet/common-browser/validators/ValidationError';
+    import { ValidationOptions } from '@hapi/joi';
     export interface ITranslatable<T = any> {
         getValidator(): IModelValidator<T>;
-        from(source: object): [ValidationError, T];
-        fromMany(source: object[]): Array<[ValidationError, T]>;
+        from(source: object): T;
+        fromMany(source: object[]): Array<T>;
     } type Newable<T = any> = (new (...args: any[]) => T); type TranslatableClass<U> = Newable<U> & typeof Translatable;
     export abstract class Translatable {
         static getTranslator<TT extends Translatable>(this: TranslatableClass<TT>): IModelAutoMapper<TT>;
         protected static $createTranslator<TT extends Translatable>(this: TranslatableClass<TT>): IModelAutoMapper<TT>;
         static getValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT>;
-        protected static $createValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT>;
+        protected static $createValidator<VT extends Translatable>(this: TranslatableClass<VT>, options?: ValidationOptions): IModelValidator<VT>;
+        /**
+         * Converts arbitrary object into instance of this class type.
+         *
+         * If no class property is marked for validation, all properties are copied.
+         *
+         * If just some class properties are marked for validation, they are validated then copied, the rest are ignored.
+         */
         static from<FT extends Translatable>(this: TranslatableClass<FT>, source: object, options?: MappingOptions): FT;
+        /**
+         * Converts array of arbitrary objects into array of instances of this class type.
+         * Conversion rule is same as `from()` method.
+         */
         static fromMany<FT extends Translatable>(this: TranslatableClass<FT>, source: object[], options?: MappingOptions): FT[];
     }
     /**
@@ -558,7 +570,7 @@ declare module '@micro-fleet/common-browser/validators/validate-decorator' {
      * Used to decorate model class' properties to assert it must be a number.
      */
     export function number({ min, max, ...opts }?: NumberDecoratorOptions): PropertyDecorator;
-    export type DateTimeDecoratorOptions = {
+    export type DateStringDecoratorOptions = {
         /**
          * Whether the input string is in UTC format.
          * Default: false.
@@ -580,13 +592,13 @@ declare module '@micro-fleet/common-browser/validators/validate-decorator' {
      *
      * ```typescript
      * class ModelA {
-     *    @datetime()
+     *    @dateString()
      *    birthdate: string
      * }
      *
      *
      * class ModelB {
-     *    @datetime({ convert: true })
+     *    @dateString({ convert: true })
      *    birthdate: Date
      * }
      *
@@ -594,12 +606,12 @@ declare module '@micro-fleet/common-browser/validators/validate-decorator' {
      * import * as moment from 'moment'
      *
      * class ModelC {
-     *    @datetime({ isUTC: true, translator: moment, convert: true })
+     *    @dateString({ isUTC: true, translator: moment, convert: true })
      *    birthdate: moment.Moment
      * }
      * ```
      */
-    export function datetime({ isUTC, translator, convert }?: DateTimeDecoratorOptions): PropertyDecorator;
+    export function dateString({ isUTC, translator, convert }?: DateStringDecoratorOptions): PropertyDecorator;
     /**
      * Used to decorate model class' properties to specify default value.
      * @param {any} value The default value.
@@ -704,8 +716,8 @@ declare module '@micro-fleet/common-browser/validators/validate-decorator' {
     export function translatable(): ClassDecorator;
     /**
      * Used to decorate model class to __exclusively__ declare validation rules,
-     * which means it __removes__ all rules and options from property decorator
-     * as well as parent classes, then applies the specified `validatorOptions`.
+     * which means it __replaces__ all rules and options from parent class
+     * as well as property rules in same class.
      *
      * @param {JoiModelValidatorConstructorOptions} validatorOptions The options for creating `JoiModelValidator` instance.
      */
@@ -747,7 +759,7 @@ declare module '@micro-fleet/common-browser/validators/validate-decorator' {
 declare module '@micro-fleet/common-browser/decorators' {
     import { translatable } from '@micro-fleet/common-browser/models/Translatable';
     import * as v from '@micro-fleet/common-browser/validators/validate-decorator';
-    export { ArrayDecoratorOptions, BooleanDecoratorOptions, BigIntDecoratorOptions, NumberDecoratorOptions, DateTimeDecoratorOptions, StringDecoratorOptions, } from '@micro-fleet/common-browser/validators/validate-decorator';
+    export { ArrayDecoratorOptions, BooleanDecoratorOptions, BigIntDecoratorOptions, NumberDecoratorOptions, DateStringDecoratorOptions, StringDecoratorOptions, } from '@micro-fleet/common-browser/validators/validate-decorator';
     export type Decorators = {
         /**
          * Used to decorate model class' properties to assert it must be a boolean.
@@ -788,13 +800,13 @@ declare module '@micro-fleet/common-browser/decorators' {
          *
          * ```typescript
          * class ModelA {
-         *    @datetime()
+         *    @dateString()
          *    birthdate: string
          * }
          *
          *
          * class ModelB {
-         *    @datetime({ convert: true })
+         *    @dateString({ convert: true })
          *    birthdate: Date
          * }
          *
@@ -802,12 +814,12 @@ declare module '@micro-fleet/common-browser/decorators' {
          * import * as moment from 'moment'
          *
          * class ModelC {
-         *    @datetime({ isUTC: true, translator: moment, convert: true })
+         *    @dateString({ isUTC: true, translator: moment, convert: true })
          *    birthdate: moment.Moment
          * }
          * ```
          */
-        datetime: typeof v.datetime;
+        dateString: typeof v.dateString;
         /**
          * Used to decorate model class' properties to specify default value.
          * @param {any} value The default value.
@@ -872,12 +884,9 @@ declare module '@micro-fleet/common-browser/decorators' {
         */
         string: typeof v.string;
         /**
-         * Used to decorate model class to declare validation rules.
-         *
-         * If `validatorOptions.schemaMapModel` is specified, it overrides all properties' decorators
-         * such as @validateProp(), @number(), @defaultAs()...
-         *
-         * If `validatorOptions.schemaMapId` is specified, it overrides the @id() decorator.
+         * Used to decorate model class to __exclusively__ declare validation rules,
+         * which means it __replaces__ all rules and options from parent class
+         * as well as property rules in same class.
          *
          * @param {JoiModelValidatorConstructorOptions} validatorOptions The options for creating `JoiModelValidator` instance.
          */

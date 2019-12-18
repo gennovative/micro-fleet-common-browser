@@ -1,7 +1,6 @@
 import * as joi from '@hapi/joi'
-import cloneDeep = require('lodash.clonedeep')
 
-import { JoiModelValidator, JoiModelValidatorConstructorOptions } from './JoiModelValidator'
+import { JoiModelValidator, JoiModelValidatorConstructorOptions, ValidationOptions } from './JoiModelValidator'
 
 
 // This file is for internal use, do not export to (lib)user
@@ -31,13 +30,26 @@ export function createClassValidationMetadata(): ClassValidationMetadata {
     }
 }
 
+function cloneMetadata(source: ClassValidationMetadata): ClassValidationMetadata {
+    return {
+        schemaMapId: { ...source.schemaMapId },
+        schemaMapModel: { ...source.schemaMapModel },
+        props: { ...source.props },
+        idProps: new Set(source.idProps),
+    }
+}
+
 export function getClassValidationMetadata(Class: Function): ClassValidationMetadata {
     let proto = Class.prototype
+    if (proto.hasOwnProperty(VALIDATE_META)) {
+        return proto[VALIDATE_META]
+    }
+
     do {
-        if (proto.hasOwnProperty(VALIDATE_META)) {
-            return cloneDeep(proto[VALIDATE_META])
-        }
         proto = Object.getPrototypeOf(proto)
+        if (proto.hasOwnProperty(VALIDATE_META)) {
+            return cloneMetadata(proto[VALIDATE_META])
+        }
     } while (!Object.is(proto, Object.prototype))
 
     return createClassValidationMetadata()
@@ -88,16 +100,20 @@ export function setPropValidationMetadata(
 }
 
 
-export function createJoiValidator<T>(Class: Function): JoiModelValidator<T> {
+export function createJoiValidator<T>(
+    Class: Function,
+    joiOptions?: ValidationOptions,
+): JoiModelValidator<T> {
     const classMeta = getClassValidationMetadata(Class)
     const [schemaMapId, schemaMapModel] = buildSchemaMapModel(classMeta)
     if (isEmpty(schemaMapId) && isEmpty(schemaMapModel)) {
+        // Class doesn't need validating
         return null
     }
     const validator = new JoiModelValidator<T>({
         schemaMapModel,
         schemaMapId,
-        joiOptions: classMeta.joiOptions,
+        joiOptions: joiOptions || classMeta.joiOptions,
     })
     // Clean up
     deleteClassValidationMetadata(Class)

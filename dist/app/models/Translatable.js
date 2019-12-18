@@ -21,8 +21,6 @@ class Translatable {
     }
     static getValidator() {
         let validator;
-        // "validator" may be `null` when class doesn't need validating
-        // if (validator === undefined) {
         if (!this.hasOwnProperty(VALIDATOR)) {
             validator = this.$createValidator();
             this[VALIDATOR] = validator;
@@ -32,12 +30,23 @@ class Translatable {
         }
         return validator;
     }
-    static $createValidator() {
-        return validate_internal_1.createJoiValidator(this);
+    static $createValidator(options) {
+        return validate_internal_1.createJoiValidator(this, options);
     }
+    /**
+     * Converts arbitrary object into instance of this class type.
+     *
+     * If no class property is marked for validation, all properties are copied.
+     *
+     * If just some class properties are marked for validation, they are validated then copied, the rest are ignored.
+     */
     static from(source, options = {}) {
         return this.getTranslator().whole(source, options);
     }
+    /**
+     * Converts array of arbitrary objects into array of instances of this class type.
+     * Conversion rule is same as `from()` method.
+     */
     static fromMany(source, options = {}) {
         return this.getTranslator().wholeMany(source, options);
     }

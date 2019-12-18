@@ -2,7 +2,7 @@ import { translatable } from './models/Translatable'
 import * as v from './validators/validate-decorator'
 
 export { ArrayDecoratorOptions, BooleanDecoratorOptions, BigIntDecoratorOptions,
-    NumberDecoratorOptions, DateTimeDecoratorOptions, StringDecoratorOptions,
+    NumberDecoratorOptions, DateStringDecoratorOptions, StringDecoratorOptions,
 } from './validators/validate-decorator'
 
 
@@ -49,13 +49,13 @@ export type Decorators = {
      *
      * ```typescript
      * class ModelA {
-     *    @datetime()
+     *    @dateString()
      *    birthdate: string
      * }
      *
      *
      * class ModelB {
-     *    @datetime({ convert: true })
+     *    @dateString({ convert: true })
      *    birthdate: Date
      * }
      *
@@ -63,12 +63,12 @@ export type Decorators = {
      * import * as moment from 'moment'
      *
      * class ModelC {
-     *    @datetime({ isUTC: true, translator: moment, convert: true })
+     *    @dateString({ isUTC: true, translator: moment, convert: true })
      *    birthdate: moment.Moment
      * }
      * ```
      */
-    datetime: typeof v.datetime,
+    dateString: typeof v.dateString,
 
     /**
      * Used to decorate model class' properties to specify default value.
@@ -140,12 +140,9 @@ export type Decorators = {
     string: typeof v.string,
 
     /**
-     * Used to decorate model class to declare validation rules.
-     *
-     * If `validatorOptions.schemaMapModel` is specified, it overrides all properties' decorators
-     * such as @validateProp(), @number(), @defaultAs()...
-     *
-     * If `validatorOptions.schemaMapId` is specified, it overrides the @id() decorator.
+     * Used to decorate model class to __exclusively__ declare validation rules,
+     * which means it __replaces__ all rules and options from parent class
+     * as well as property rules in same class.
      *
      * @param {JoiModelValidatorConstructorOptions} validatorOptions The options for creating `JoiModelValidator` instance.
      */
@@ -194,7 +191,7 @@ export const decorators: Decorators = {
     array: v.array,
     bigint: v.bigint,
     boolean: v.boolean,
-    datetime: v.datetime,
+    dateString: v.dateString,
     defaultAs: v.defaultAs,
     id: v.id,
     number: v.number,

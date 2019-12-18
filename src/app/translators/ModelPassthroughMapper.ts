@@ -179,7 +179,9 @@ export class PassthroughAutoMapper<T extends Object>
 
         const [error, model] = this.validator[fn](source)
 
-        if (!error) { return model }
+        if (!error) {
+            return model
+        }
 
         if (!options.errorCallback) {
             throw error

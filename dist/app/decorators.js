@@ -6,7 +6,7 @@ exports.decorators = {
     array: v.array,
     bigint: v.bigint,
     boolean: v.boolean,
-    datetime: v.datetime,
+    dateString: v.dateString,
     defaultAs: v.defaultAs,
     id: v.id,
     number: v.number,
