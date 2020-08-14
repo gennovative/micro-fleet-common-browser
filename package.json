@@ -1,6 +1,6 @@
 {
     "name": "@micro-fleet/common-browser",
-    "version": "2.4.0-rc2",
+    "version": "2.4.0-rc5",
     "description": "Contains helpers, models and constants for Frontend.",
     "scripts": {
         "build": "npm run compile && npm run test",
@@ -16,15 +16,13 @@
         "prepublishOnly": "No publishing at root"
     },
     "dependencies": {
-        "@hapi/joi": "=16.1.8",
-        "lodash.clonedeep": "~4.5"
+        "@hapi/joi": "=16.1.8"
     },
     "devDependencies": {
         "@types/chai": "~4.2",
         "@types/chai-spies": "~1.0",
         "@types/debug": "~4.1",
         "@types/hapi__joi": "~16.0",
-        "@types/lodash.clonedeep": "~4.5",
         "@types/mocha": "~5.2",
         "chai": "~4.2",
         "chai-spies": "~1.0",

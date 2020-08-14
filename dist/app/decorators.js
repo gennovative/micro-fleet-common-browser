@@ -4,13 +4,13 @@ const Translatable_1 = require("./models/Translatable");
 const v = require("./validators/validate-decorator");
 exports.decorators = {
     array: v.array,
-    bigInt: v.bigInt,
+    bigint: v.bigint,
     boolean: v.boolean,
-    datetime: v.datetime,
+    dateString: v.dateString,
     defaultAs: v.defaultAs,
     id: v.id,
     number: v.number,
-    only: v.only,
+    valid: v.valid,
     required: v.required,
     string: v.string,
     validateClass: v.validateClass,

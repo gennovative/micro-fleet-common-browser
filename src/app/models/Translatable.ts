@@ -1,12 +1,13 @@
+import { PassthroughAutoMapper, IModelAutoMapper, MappingOptions } from '../translators/ModelPassthroughMapper'
 import { IModelValidator } from '../validators/JoiModelValidator'
 import { createJoiValidator } from '../validators/validate-internal'
-import { ValidationError } from '../validators/ValidationError'
+import { ValidationOptions } from '@hapi/joi'
 
 
 export interface ITranslatable<T = any> {
     getValidator(): IModelValidator<T>
-    from(source: object): [ValidationError, T]
-    fromMany(source: object[]): Array<[ValidationError, T]>
+    from(source: object): T
+    fromMany(source: object[]): Array<T>
 }
 
 
@@ -18,33 +19,62 @@ type Newable<T = any> = (new (...args: any[]) => T)
 
 type TranslatableClass<U> = Newable<U> & typeof Translatable
 
+const TRANSLATOR = Symbol()
 const VALIDATOR = Symbol()
 
 export abstract class Translatable {
+    public static getTranslator<TT extends Translatable>(this: TranslatableClass<TT>): IModelAutoMapper<TT> {
+        let translator
+        if (!this.hasOwnProperty(TRANSLATOR)) {
+            translator = this.$createTranslator<TT>()
+            this[TRANSLATOR] = translator
+        }
+        else {
+            translator = this[TRANSLATOR]
+        }
+        return translator
+    }
+
+    protected static $createTranslator<TT extends Translatable>(this: TranslatableClass<TT>): IModelAutoMapper<TT> {
+        return new PassthroughAutoMapper(this.getValidator<TT>())
+    }
 
     public static getValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT> {
-        let validator = this[VALIDATOR]
-        // "validator" may be `null` when class doesn't need validating
-        if (validator === undefined) {
+        let validator
+        if (!this.hasOwnProperty(VALIDATOR)) {
             validator = this.$createValidator()
             this[VALIDATOR] = validator
+        }
+        else {
+            validator = this[VALIDATOR]
         }
         return validator
     }
 
-    protected static $createValidator<VT extends Translatable>(this: TranslatableClass<VT>): IModelValidator<VT> {
-        return createJoiValidator(this)
+    protected static $createValidator<VT extends Translatable>(
+        this: TranslatableClass<VT>,
+        options?: ValidationOptions,
+    ): IModelValidator<VT> {
+        return createJoiValidator(this, options)
     }
 
-    public static from<FT extends Translatable>(this: TranslatableClass<FT>, source: object): [ValidationError, FT] {
-        return this.getValidator<FT>().whole(source)
+    /**
+     * Converts arbitrary object into instance of this class type.
+     *
+     * If no class property is marked for validation, all properties are copied.
+     *
+     * If just some class properties are marked for validation, they are validated then copied, the rest are ignored.
+     */
+    public static from<FT extends Translatable>(this: TranslatableClass<FT>, source: object, options: MappingOptions = {}): FT {
+        return this.getTranslator<FT>().whole(source, options)
     }
 
-    public static fromMany<FT extends Translatable>(this: TranslatableClass<FT>, source: object[]): Array<[ValidationError, FT]> {
-        if (!source) { return null }
-
-        // tslint:disable-next-line: prefer-const
-        return source.map(s => this.getValidator<FT>().whole(s))
+    /**
+     * Converts array of arbitrary objects into array of instances of this class type.
+     * Conversion rule is same as `from()` method.
+     */
+    public static fromMany<FT extends Translatable>(this: TranslatableClass<FT>, source: object[], options: MappingOptions = {}): FT[] {
+        return this.getTranslator<FT>().wholeMany(source, options)
     }
 
 }

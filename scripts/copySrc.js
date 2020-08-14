@@ -5,7 +5,8 @@ const copySrc = require('../../../../scripts/copySrc')
 copySrc([
 	{
 		from: abs('../typings/app.d.ts'),
-		to: abs('../dist/app/typings/app.d.ts')
+		to: abs('../dist/app/typings/app.d.ts'),
+		transformFn: (content) => content.replace(/\/dist\/app/g, '')
 	},
 	{
 		from: abs('../typings/global.d.ts'),

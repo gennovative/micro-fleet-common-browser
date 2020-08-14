@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const joi = require("@hapi/joi");
-const cloneDeep = require("lodash.clonedeep");
 const JoiModelValidator_1 = require("./JoiModelValidator");
 const VALIDATE_META = Symbol();
 function createClassValidationMetadata() {
@@ -13,13 +12,24 @@ function createClassValidationMetadata() {
     };
 }
 exports.createClassValidationMetadata = createClassValidationMetadata;
+function cloneMetadata(source) {
+    return {
+        schemaMapId: Object.assign({}, source.schemaMapId),
+        schemaMapModel: Object.assign({}, source.schemaMapModel),
+        props: Object.assign({}, source.props),
+        idProps: new Set(source.idProps),
+    };
+}
 function getClassValidationMetadata(Class) {
     let proto = Class.prototype;
+    if (proto.hasOwnProperty(VALIDATE_META)) {
+        return proto[VALIDATE_META];
+    }
     do {
-        if (proto.hasOwnProperty(VALIDATE_META)) {
-            return cloneDeep(proto[VALIDATE_META]);
-        }
         proto = Object.getPrototypeOf(proto);
+        if (proto.hasOwnProperty(VALIDATE_META)) {
+            return cloneMetadata(proto[VALIDATE_META]);
+        }
     } while (!Object.is(proto, Object.prototype));
     return createClassValidationMetadata();
 }
@@ -41,11 +51,15 @@ exports.deleteClassValidationMetadata = deleteClassValidationMetadata;
 /**
  * @param classMeta Must be passed to avoid calling costly function `getClassValidationMetadata`
  */
-function extractPropValidationMetadata(classMeta, propName) {
-    return classMeta.props[propName] || {
-        type: () => joi.string(),
-        rules: [],
-    };
+function extractPropValidationMetadata(classMeta, propName, ownerClass) {
+    const found = classMeta.props[propName];
+    return (found != null && found.ownerClass === ownerClass)
+        ? found
+        : {
+            type: () => joi.string(),
+            rules: [],
+            ownerClass,
+        };
 }
 exports.extractPropValidationMetadata = extractPropValidationMetadata;
 function setPropValidationMetadata(Class, classMeta, propName, propMeta) {
@@ -54,16 +68,17 @@ function setPropValidationMetadata(Class, classMeta, propName, propMeta) {
     setClassValidationMetadata(Class, classMeta);
 }
 exports.setPropValidationMetadata = setPropValidationMetadata;
-function createJoiValidator(Class) {
+function createJoiValidator(Class, joiOptions) {
     const classMeta = getClassValidationMetadata(Class);
     const [schemaMapId, schemaMapModel] = buildSchemaMapModel(classMeta);
     if (isEmpty(schemaMapId) && isEmpty(schemaMapModel)) {
+        // Class doesn't need validating
         return null;
     }
     const validator = new JoiModelValidator_1.JoiModelValidator({
         schemaMapModel,
         schemaMapId,
-        joiOptions: classMeta.joiOptions,
+        joiOptions: joiOptions || classMeta.joiOptions,
     });
     // Clean up
     deleteClassValidationMetadata(Class);
